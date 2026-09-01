@@ -1,6 +1,5 @@
 import {
   BufferGeometry,
-  Clock,
   Color,
   DoubleSide,
   Euler,
@@ -16,6 +15,7 @@ import {
   SRGBColorSpace,
   Scene,
   TextureLoader,
+  Timer,
   Vector3,
   WebGLRenderer,
 } from "three";
@@ -387,14 +387,21 @@ function setupInstance(container, pool) {
 
   /* ---------- loop ---------- */
 
-  const clock = new Clock();
+  // Timer over Clock (deprecated): connect() uses the Page Visibility API so a
+  // backgrounded tab reports a zero delta instead of one huge catch-up frame.
+  const timer = new Timer();
+  timer.connect(document);
+
   let travel = 0;
   let visible = true;
   let contextLost = false;
 
-  const tick = () => {
+  const tick = (timestamp) => {
     container._tunnelRaf = requestAnimationFrame(tick);
-    const dt = Math.min(clock.getDelta(), 0.1);
+    timer.update(timestamp);
+    // Still clamped: page visibility doesn't cover scrolling off-screen, or a
+    // long first frame while the GPU warms up.
+    const dt = Math.min(timer.getDelta(), 0.1);
     if (!visible || contextLost) return;
 
     travel += vars.speed * dt;
@@ -429,7 +436,7 @@ function setupInstance(container, pool) {
   if (reduce) {
     renderOnce(); // decorative motion — one static frame instead of a loop
   } else {
-    clock.getDelta(); // discard time spent loading textures
+    timer.reset(); // discard time spent loading textures
     tick();
   }
 
@@ -450,7 +457,7 @@ function setupInstance(container, pool) {
   const intersectionObserver = new IntersectionObserver(
     (entries) => {
       visible = entries[0].isIntersecting;
-      clock.getDelta(); // don't let time spent hidden jump the camera forward
+      timer.reset(); // don't let time spent hidden jump the camera forward
     },
     { threshold: 0 }
   );
@@ -478,6 +485,7 @@ function setupInstance(container, pool) {
   function destroy() {
     cancelAnimationFrame(container._tunnelRaf);
     container._tunnelRaf = null;
+    timer.dispose(); // detaches the document visibilitychange listener
     resizeObserver.disconnect();
     intersectionObserver.disconnect();
     canvas.removeEventListener("webglcontextlost", onContextLost);
