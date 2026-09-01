@@ -11,9 +11,13 @@
   },
   "dependencies": {
     "gsap": "^3.12.5",
+    "locomotive-scroll": "^5.0.1",
     "three": "^0.185.1"
   },
   "devDependencies": {
     "vite": "^8.2.2"
+  },
+  "allowScripts": {
+    "fsevents@2.3.3": true
   }
 }

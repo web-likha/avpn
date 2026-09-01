@@ -37,6 +37,8 @@ dist/          bundled output pasted into Webflow custom code
 
 - [`docs/tunnel.md`](docs/tunnel.md) — the hero tunnel canvas: Webflow setup,
   image requirements, tunables, troubleshooting.
+- [`docs/locomotive.md`](docs/locomotive.md) — page-wide smooth scroll and
+  `data-scroll-speed` parallax: Webflow setup, tuning, troubleshooting.
 
 ## Local development
 

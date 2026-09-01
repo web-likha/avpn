@@ -30,11 +30,64 @@
         margin-bottom: 2rem;
         background: #fff;
       }
+      /* Stands in for a Webflow section tall enough to give the parallax
+         elements room to drift before/after they enter the viewport.
+         Positioning here uses flex/gap, not `transform` — Locomotive writes
+         its own inline `transform` onto [data-scroll-speed] elements, which
+         would silently clobber any transform set via CSS. */
+      .parallax-demo {
+        position: relative;
+        height: 150vh;
+        margin-bottom: 2rem;
+        border: 1px dashed #444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4rem;
+      }
+      .parallax-demo__box {
+        flex: none;
+        width: 200px;
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        border-radius: 12px;
+      }
+      .parallax-demo__box--slow {
+        background: #e94f37;
+      }
+      .parallax-demo__box--fast {
+        background: #3f88c5;
+      }
     </style>
   </head>
-  <body>
+  <body data-smooth-scroll-init>
     <p>Scroll down — each block below stands in for a Webflow element carrying
       the same <code>data-*</code> attributes you'd add in the Designer.</p>
+
+    <p>Parallax — <code>data-scroll-speed</code> only does anything while
+      <code>[data-smooth-scroll-init]</code> is present on <code>&lt;body&gt;</code>
+      (it is, in this preview) and Locomotive is driving the scroll. Positive
+      speed lags behind scroll, negative speed leads it.</p>
+
+    <div class="parallax-demo">
+      <div
+        class="parallax-demo__box parallax-demo__box--slow"
+        data-scroll
+        data-scroll-speed="0.3"
+      >
+        speed 0.3
+      </div>
+      <div
+        class="parallax-demo__box parallax-demo__box--fast"
+        data-scroll
+        data-scroll-speed="-0.3"
+      >
+        speed -0.3
+      </div>
+    </div>
 
     <section data-animate="reveal">Reveal block 1</section>
     <section data-animate="reveal" data-animate-delay="0.2">Reveal block 2 (delayed)</section>
