@@ -72,11 +72,32 @@ a small helper module. Follow this shape:
    final bundle.
 4. Commit the updated `dist/animations.min.js` — it's the deliverable, not an
    artifact to gitignore.
-5. In Webflow: Site Settings → Custom Code → Footer Code (site-wide) or a page's
-   before-`</body>` code, paste a `<script>` tag hosting `dist/animations.min.js`
-   (or the raw contents if hosting isn't set up yet).
+5. Wire the bundle into Webflow — see "Local dev against Webflow" below.
 6. In the Webflow Designer, add the matching `data-<component>-*` attributes to
    whichever elements make up that component, then Publish.
+
+## Local dev against Webflow
+
+`npm run webflow` rebuilds `dist/` on save and serves it at
+`http://localhost:4173/animations.min.js`. The AVPN site's footer custom code
+already points there, so the loop is: save → refresh the published page.
+
+Publish **once** after the script tag is added; after that, JS changes need no
+republish. Custom code doesn't run in the Designer canvas, so test against
+`avpn-25-26.webflow.io`, not Designer preview.
+
+Two traps worth knowing:
+
+- **Don't serve `dist/` with `npm run dev`.** Vite's dev server rewrites JS under
+  the project root — the bundle comes back ~3.4MB of transformed modules instead
+  of the 638KB that ships. `npm run webflow` serves it statically instead.
+- **Safari blocks this; Chrome and Firefox don't.** An `https://` page loading
+  `http://localhost` is allowed only because localhost is a potentially-trustworthy
+  origin, and Safari doesn't grant that exemption.
+
+For production, register a hosted script with an SRI hash against a versioned CDN
+URL. That's why dev uses freeform footer code instead: Webflow's registered-script
+API requires the hash, which would change on every rebuild.
 
 ## Constraints
 

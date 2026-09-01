@@ -28,8 +28,15 @@ src/
   animations/  DOM/scroll components (GSAP), one file per component
   canvas/      WebGL/canvas components (three.js), one file per component
   index.js     entry point — imports and initializes every component
+docs/          per-component dev notes (setup, tuning, troubleshooting)
+scripts/       build/serve helpers
 dist/          bundled output pasted into Webflow custom code
 ```
+
+## Component docs
+
+- [`docs/tunnel.md`](docs/tunnel.md) — the hero tunnel canvas: Webflow setup,
+  image requirements, tunables, troubleshooting.
 
 ## Local development
 
@@ -52,5 +59,10 @@ it's visible during `npm run dev`.
 ```
 npm install
 npm run dev     # Vite dev server with HMR at index.html — fast local preview
-npm run build   # production build -> dist/animations.min.js (paste into Webflow)
+npm run build   # production build -> dist/animations.min.js
+npm run webflow # rebuild on save + serve dist/ for the live Webflow site
 ```
+
+`npm run webflow` is the Webflow loop: the published site pulls the bundle off
+this machine, so a save is live on refresh with no republish. See
+`skills/webflow-animation-embed/SKILL.md` for the script tag and its caveats.

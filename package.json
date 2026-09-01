@@ -6,7 +6,8 @@
   "description": "Animation scripts for the AVPN Webflow site (built by Weblikha)",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "webflow": "node scripts/dev-webflow.mjs"
   },
   "dependencies": {
     "gsap": "^3.12.5",
