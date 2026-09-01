@@ -128,7 +128,8 @@ function collectSources(imgBox, done) {
   const urls = [];
   let pending = imgs.length;
   const settle = (img) => {
-    const url = img.currentSrc || img.src;
+    // Reading img.src turns an empty src attribute into the current page URL.
+    const url = img.currentSrc || img.getAttribute("src")?.trim() || "";
     if (url) urls.push(url);
     if (--pending === 0) done(urls);
   };
@@ -517,7 +518,17 @@ function mount(container) {
   // token lets the newest call win and older ones bow out.
   const stale = () => !container.isConnected || container._tunnelGen !== gen;
 
-  collectSources(container.querySelector("[data-tunnel-images]"), (urls) => {
+  // Webflow can leave an empty placeholder image block beside the authored
+  // manifest. Use the first block that actually contains an image source.
+  const imgBox = Array.from(
+    container.querySelectorAll("[data-tunnel-images]")
+  ).find((box) =>
+    Array.from(box.querySelectorAll("img")).some(
+      (img) => img.currentSrc || img.getAttribute("src")?.trim()
+    )
+  );
+
+  collectSources(imgBox, (urls) => {
     if (stale()) return;
     preload(urls, (pool) => {
       if (stale()) {
