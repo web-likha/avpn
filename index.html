@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AVPN Animations — Local Preview</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        margin: 0;
+        padding: 2rem;
+        background: #111;
+        color: #eee;
+      }
+      section {
+        height: 80vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px dashed #444;
+        margin-bottom: 2rem;
+        font-size: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Scroll down — each block below stands in for a Webflow element carrying
+      the same <code>data-*</code> attributes you'd add in the Designer.</p>
+
+    <section data-animate="reveal">Reveal block 1</section>
+    <section data-animate="reveal" data-animate-delay="0.2">Reveal block 2 (delayed)</section>
+    <section data-animate="reveal">Reveal block 3</section>
+
+    <script type="module" src="/src/index.js"></script>
+  </body>
+</html>
