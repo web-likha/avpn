@@ -74,32 +74,35 @@ you get the wireframe with no slabs and no error.
 
 ## Tuning
 
-CSS custom properties on the mount. Webflow's style panel can't author these, so
-put them in the page's custom code:
+Data attributes on the mount. Each attribute is optional; omitted or invalid
+values use the built-in default.
 
 ```html
-<style>
-  .hero_tunnel {
-    --tunnel-speed: 3.5;
-    --tunnel-line-color: #b0b0b0;
-  }
-</style>
+<div class="hero_tunnel"
+  data-tunnel-init="true"
+  data-tunnel-width="24"
+  data-tunnel-height="16"
+  data-tunnel-speed="3.5"
+  data-tunnel-line-color="#b0b0b0">
+</div>
 ```
 
 | Property | Default | What it does |
 |---|---|---|
-| `--tunnel-bg` | `transparent` | Background color. Transparent lets the section's own background show through. |
-| `--tunnel-line-color` | `#b0b0b0` | Wireframe color. |
-| `--tunnel-line-opacity` | `0.5` | Wireframe opacity. |
-| `--tunnel-image-opacity` | `0.85` | Slab opacity once faded in. |
-| `--tunnel-speed` | `3.5` | World units per second. |
-| `--tunnel-fill-rate` | `0.2` | Slab density on floor and walls (0–1). |
-| `--tunnel-ceiling-rate` | `0.12` | Ceiling density — deliberately sparser, so the corridor reads as open above. |
-| `--tunnel-fov` | `70` | Camera field of view. Higher = wider, more dramatic perspective. |
+| `data-tunnel-width` | `24` | Corridor width in world units. |
+| `data-tunnel-height` | `16` | Corridor height in world units. |
+| `data-tunnel-bg` | `transparent` | Background color. Transparent lets the section's own background show through. |
+| `data-tunnel-line-color` | `#b0b0b0` | Wireframe color. |
+| `data-tunnel-line-opacity` | `0.5` | Wireframe opacity. |
+| `data-tunnel-image-opacity` | `0.85` | Slab opacity once faded in. |
+| `data-tunnel-speed` | `3.5` | World units per second. |
+| `data-tunnel-fill-rate` | `0.2` | Slab density on floor and walls (0–1). |
+| `data-tunnel-ceiling-rate` | `0.12` | Ceiling density — deliberately sparser, so the corridor reads as open above. |
+| `data-tunnel-fov` | `70` | Camera field of view. Higher = wider, more dramatic perspective. |
 
-Corridor dimensions (24 × 16 world units, 6 × 4 grid, 6-deep segments) are **not**
-tunables — they're in `src/canvas/tunnel.js` as constants. Changing them changes
-what the tunnel is, and shifts the slab aspect ratios with it.
+The grid remains 6 × 4 with 6-deep segments. Width and height are configurable
+per instance through the data attributes above; changing them also updates the
+slab aspect ratios automatically.
 
 ---
 

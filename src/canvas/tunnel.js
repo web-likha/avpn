@@ -33,43 +33,36 @@ import {
  *                         With no images the corridor still renders as bare
  *                         wireframe, so the component can ship before the art does.
  *
- * Tunables (CSS custom properties on the mount, so the Designer/CSS owner can
- * adjust them without touching this repo):
- *   --tunnel-bg             background color, or `transparent` (default) to let
+ * Tunables (data attributes on the mount, so each Webflow instance can be
+ * adjusted independently):
+ *   data-tunnel-width        corridor width in world units (default 24)
+ *   data-tunnel-height       corridor height in world units (default 16)
+ *   data-tunnel-bg           background color, or `transparent` (default) to let
  *                           the Webflow section's own background show through
- *   --tunnel-line-color     wireframe color            (default #b0b0b0)
- *   --tunnel-line-opacity   wireframe opacity          (default 0.5)
- *   --tunnel-image-opacity  slab opacity               (default 0.85)
- *   --tunnel-speed          world units per second     (default 3.5)
- *   --tunnel-fill-rate      floor/wall slab density    (default 0.2)
- *   --tunnel-ceiling-rate   ceiling slab density       (default 0.12)
- *   --tunnel-fov            camera field of view       (default 70)
+ *   data-tunnel-line-color   wireframe color            (default #b0b0b0)
+ *   data-tunnel-line-opacity wireframe opacity          (default 0.5)
+ *   data-tunnel-image-opacity slab opacity              (default 0.85)
+ *   data-tunnel-speed        world units per second     (default 3.5)
+ *   data-tunnel-fill-rate    floor/wall slab density    (default 0.2)
+ *   data-tunnel-ceiling-rate ceiling slab density       (default 0.12)
+ *   data-tunnel-fov          camera field of view       (default 70)
  */
 
 // Corridor dimensions are fixed geometry, not design tunables — changing them
 // changes what the tunnel *is*, not how it's tuned.
-const CORRIDOR_W = 24;
-const CORRIDOR_H = 16;
 const SEG_DEPTH = 6;
 const SEG_COUNT = 14;
 const COLS = 6;
 const ROWS = 4;
 
-const CELL_W = CORRIDOR_W / COLS;
-const CELL_H = CORRIDOR_H / ROWS;
-const HALF_W = CORRIDOR_W / 2;
-const HALF_H = CORRIDOR_H / 2;
 const GAP = 0.4; // shrinks each slab so the wireframe cell stays visible around it
 
 const CAMERA_LERP = 0.06;
 const FADE_LERP = 0.06;
 
-// The two slab shapes, as width/height. Walls run with the corridor so they're
-// landscape; floor and ceiling run across it so they're portrait.
-const WALL_ASPECT = (SEG_DEPTH - GAP) / (CELL_H - GAP); // 5.6 / 3.6
-const FLOOR_ASPECT = (CELL_W - GAP) / (SEG_DEPTH - GAP); // 3.6 / 5.6
-
 const DEFAULTS = {
+  width: 24,
+  height: 16,
   bg: "transparent",
   lineColor: "#b0b0b0",
   lineOpacity: 0.5,
@@ -80,27 +73,28 @@ const DEFAULTS = {
   fov: 70,
 };
 
-/** Reads a CSS custom property off the mount, falling back to the default. */
+/** Reads a data attribute off the mount, falling back to the default. */
 function readVars(container) {
-  const style = getComputedStyle(container);
   const str = (name, fallback) => {
-    const v = style.getPropertyValue(name).trim();
+    const v = container.getAttribute(name)?.trim();
     return v || fallback;
   };
   const num = (name, fallback) => {
-    const v = parseFloat(style.getPropertyValue(name));
+    const v = parseFloat(container.getAttribute(name));
     return Number.isFinite(v) ? v : fallback;
   };
 
   return {
-    bg: str("--tunnel-bg", DEFAULTS.bg),
-    lineColor: str("--tunnel-line-color", DEFAULTS.lineColor),
-    lineOpacity: num("--tunnel-line-opacity", DEFAULTS.lineOpacity),
-    imageOpacity: num("--tunnel-image-opacity", DEFAULTS.imageOpacity),
-    speed: num("--tunnel-speed", DEFAULTS.speed),
-    fillRate: num("--tunnel-fill-rate", DEFAULTS.fillRate),
-    ceilingRate: num("--tunnel-ceiling-rate", DEFAULTS.ceilingRate),
-    fov: num("--tunnel-fov", DEFAULTS.fov),
+    width: num("data-tunnel-width", DEFAULTS.width),
+    height: num("data-tunnel-height", DEFAULTS.height),
+    bg: str("data-tunnel-bg", DEFAULTS.bg),
+    lineColor: str("data-tunnel-line-color", DEFAULTS.lineColor),
+    lineOpacity: num("data-tunnel-line-opacity", DEFAULTS.lineOpacity),
+    imageOpacity: num("data-tunnel-image-opacity", DEFAULTS.imageOpacity),
+    speed: num("data-tunnel-speed", DEFAULTS.speed),
+    fillRate: num("data-tunnel-fill-rate", DEFAULTS.fillRate),
+    ceilingRate: num("data-tunnel-ceiling-rate", DEFAULTS.ceilingRate),
+    fov: num("data-tunnel-fov", DEFAULTS.fov),
   };
 }
 
@@ -187,7 +181,7 @@ function disposePool(pool) {
  * Loads every URL, skipping any that fail, and pre-fits each one to both slab
  * orientations so slab creation stays allocation-free.
  */
-function preload(urls, done) {
+function preload(urls, vars, done) {
   if (!urls.length) {
     done([]);
     return;
@@ -195,6 +189,11 @@ function preload(urls, done) {
 
   const loader = new TextureLoader();
   loader.setCrossOrigin("anonymous"); // WebGL refuses cross-origin textures without it
+  const cellW = vars.width / COLS;
+  const cellH = vars.height / ROWS;
+  // Walls run with the corridor and floor/ceiling run across it.
+  const wallAspect = (SEG_DEPTH - GAP) / (cellH - GAP);
+  const floorAspect = (cellW - GAP) / (SEG_DEPTH - GAP);
   const pool = new Array(urls.length);
   let pending = urls.length;
 
@@ -203,8 +202,8 @@ function preload(urls, done) {
     done(
       pool.filter(Boolean).map((tex) => ({
         source: tex,
-        landscape: coverFit(tex, WALL_ASPECT),
-        portrait: coverFit(tex, FLOOR_ASPECT),
+        landscape: coverFit(tex, wallAspect),
+        portrait: coverFit(tex, floorAspect),
       }))
     );
   };
@@ -225,8 +224,13 @@ function preload(urls, done) {
 }
 
 /** Builds one instance. Returns a handle with a `destroy()` for teardown. */
-function setupInstance(container, pool) {
-  const vars = readVars(container);
+function setupInstance(container, pool, vars) {
+  const corridorW = vars.width;
+  const corridorH = vars.height;
+  const cellW = corridorW / COLS;
+  const cellH = corridorH / ROWS;
+  const halfW = corridorW / 2;
+  const halfH = corridorH / 2;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const canvas = document.createElement("canvas");
@@ -289,9 +293,9 @@ function setupInstance(container, pool) {
       if (i > last + 1 && Math.random() < vars.fillRate) {
         addSlab(
           group,
-          new Vector3(-HALF_W + i * CELL_W + CELL_W / 2, -HALF_H, zc),
+          new Vector3(-halfW + i * cellW + cellW / 2, -halfH, zc),
           new Euler(-Math.PI / 2, 0, 0),
-          CELL_W,
+          cellW,
           SEG_DEPTH
         );
         last = i;
@@ -303,9 +307,9 @@ function setupInstance(container, pool) {
       if (i > last + 1 && Math.random() < vars.ceilingRate) {
         addSlab(
           group,
-          new Vector3(-HALF_W + i * CELL_W + CELL_W / 2, HALF_H, zc),
+          new Vector3(-halfW + i * cellW + cellW / 2, halfH, zc),
           new Euler(Math.PI / 2, 0, 0),
-          CELL_W,
+          cellW,
           SEG_DEPTH
         );
         last = i;
@@ -317,10 +321,10 @@ function setupInstance(container, pool) {
       if (i > last + 1 && Math.random() < vars.fillRate) {
         addSlab(
           group,
-          new Vector3(-HALF_W, -HALF_H + i * CELL_H + CELL_H / 2, zc),
+          new Vector3(-halfW, -halfH + i * cellH + cellH / 2, zc),
           new Euler(0, Math.PI / 2, 0),
           SEG_DEPTH,
-          CELL_H
+          cellH
         );
         last = i;
       }
@@ -331,10 +335,10 @@ function setupInstance(container, pool) {
       if (i > last + 1 && Math.random() < vars.fillRate) {
         addSlab(
           group,
-          new Vector3(HALF_W, -HALF_H + i * CELL_H + CELL_H / 2, zc),
+          new Vector3(halfW, -halfH + i * cellH + cellH / 2, zc),
           new Euler(0, -Math.PI / 2, 0),
           SEG_DEPTH,
-          CELL_H
+          cellH
         );
         last = i;
       }
@@ -357,19 +361,19 @@ function setupInstance(container, pool) {
 
     const pts = [];
     for (let i = 0; i <= COLS; i++) {
-      const x = -HALF_W + i * CELL_W;
-      pts.push(x, -HALF_H, 0, x, -HALF_H, -SEG_DEPTH);
-      pts.push(x, HALF_H, 0, x, HALF_H, -SEG_DEPTH);
+      const x = -halfW + i * cellW;
+      pts.push(x, -halfH, 0, x, -halfH, -SEG_DEPTH);
+      pts.push(x, halfH, 0, x, halfH, -SEG_DEPTH);
     }
     for (let i = 1; i < ROWS; i++) {
-      const y = -HALF_H + i * CELL_H;
-      pts.push(-HALF_W, y, 0, -HALF_W, y, -SEG_DEPTH);
-      pts.push(HALF_W, y, 0, HALF_W, y, -SEG_DEPTH);
+      const y = -halfH + i * cellH;
+      pts.push(-halfW, y, 0, -halfW, y, -SEG_DEPTH);
+      pts.push(halfW, y, 0, halfW, y, -SEG_DEPTH);
     }
-    pts.push(-HALF_W, -HALF_H, 0, HALF_W, -HALF_H, 0);
-    pts.push(-HALF_W, HALF_H, 0, HALF_W, HALF_H, 0);
-    pts.push(-HALF_W, -HALF_H, 0, -HALF_W, HALF_H, 0);
-    pts.push(HALF_W, -HALF_H, 0, HALF_W, HALF_H, 0);
+    pts.push(-halfW, -halfH, 0, halfW, -halfH, 0);
+    pts.push(-halfW, halfH, 0, halfW, halfH, 0);
+    pts.push(-halfW, -halfH, 0, -halfW, halfH, 0);
+    pts.push(halfW, -halfH, 0, halfW, halfH, 0);
 
     const geo = new BufferGeometry();
     geo.setAttribute("position", new Float32BufferAttribute(pts, 3));
@@ -514,6 +518,7 @@ function setupInstance(container, pool) {
  */
 function mount(container) {
   const gen = container._tunnelGen;
+  const vars = readVars(container);
   // Loading is async, so a later init can overtake this one. The generation
   // token lets the newest call win and older ones bow out.
   const stale = () => !container.isConnected || container._tunnelGen !== gen;
@@ -530,12 +535,12 @@ function mount(container) {
 
   collectSources(imgBox, (urls) => {
     if (stale()) return;
-    preload(urls, (pool) => {
+    preload(urls, vars, (pool) => {
       if (stale()) {
         disposePool(pool);
         return;
       }
-      container._tunnel = setupInstance(container, pool);
+      container._tunnel = setupInstance(container, pool, vars);
     });
   });
 }
