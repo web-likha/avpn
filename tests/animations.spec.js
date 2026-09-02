@@ -35,6 +35,24 @@ test("initializes the scroll-linked reveal state", async ({ page }) => {
   await expect.poll(() => heading.evaluate((element) => getComputedStyle(element).transform)).not.toBe("none");
 });
 
+test("draws every marked line in each draw-path wrapper", async ({ page }) => {
+  const paths = page.locator("[data-draw-scroll-wrap] [data-draw-scroll-path]");
+  await expect(paths).toHaveCount(4);
+
+  expect(await page.locator("[data-draw-scroll-wrap]").evaluateAll((wrappers) =>
+    wrappers.map((wrapper) => ({
+      hasTrigger: Boolean(wrapper._drawTl && wrapper._drawTl.scrollTrigger),
+      targetCount: wrapper._drawTl?.getChildren().reduce(
+        (count, tween) => count + tween.targets().length,
+        0,
+      ) || 0,
+    })),
+  )).toEqual([
+    { hasTrigger: true, targetCount: 1 },
+    { hasTrigger: true, targetCount: 3 },
+  ]);
+});
+
 test("tolerates missing image manifests", async ({ page }) => {
   await page.addInitScript(() => {
     document.addEventListener("DOMContentLoaded", () => {

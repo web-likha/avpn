@@ -42,6 +42,33 @@ dist/          bundled output pasted into Webflow custom code
 - [`docs/locomotive.md`](docs/locomotive.md) — page-wide smooth scroll and
   `data-scroll-speed` parallax: Webflow setup, tuning, troubleshooting.
 
+## Draw Path on Scroll
+
+`src/animations/drawPathScroll.js` supports any number of independent wrappers
+and any number of SVG shapes per wrapper. Mark every line you want drawn with
+`data-draw-scroll-path`; the script uses all marked shapes in the active desktop
+or mobile SVG, not just the first one.
+
+```html
+<div data-draw-scroll-wrap data-draw-scroll-stagger="0.15">
+  <svg data-draw-scroll-desktop viewBox="0 0 400 200" aria-hidden="true">
+    <path data-draw-scroll-path d="M10 30 ..." />
+    <path data-draw-scroll-path d="M10 80 ..." />
+  </svg>
+  <svg data-draw-scroll-mobile viewBox="0 0 320 160" aria-hidden="true">
+    <path data-draw-scroll-path d="M10 30 ..." />
+  </svg>
+</div>
+```
+
+Use a separate `data-draw-scroll-wrap` for a separate scroll range. Optional
+per-wrapper attributes are `data-draw-scroll-start`,
+`data-draw-scroll-end`, and `data-draw-scroll-stagger`; the defaults are
+`clamp(top center)`, `clamp(bottom center)`, and `0` seconds. A marked shape
+must be a stroke (not a fill), and should contain one SVG subpath. For filled
+artwork such as the signature, put the centerline stroke in an SVG mask and
+the filled artwork in the masked group.
+
 ## Local development
 
 `index.html` stands in for a Webflow page — it carries the same `data-*`

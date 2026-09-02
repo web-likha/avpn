@@ -89,6 +89,22 @@
         width: min(520px, 60vw);
         height: auto;
       }
+      /* Second draw-on-scroll instance — proves the component drives more than
+         one wrapper, and more than one line per wrapper. */
+      .lines-demo {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2rem;
+        border: 1px dashed #444;
+      }
+      .lines-demo__svg {
+        display: block;
+        width: min(560px, 70vw);
+        height: auto;
+        overflow: visible;
+      }
       /* Mask reveal: SplitText builds the per-line masks itself, so there is
          no hidden start state here — the resting state is simply visible. */
       .mask-demo {
@@ -208,6 +224,57 @@
           </g>
         </svg>
       </div>
+    </div>
+
+
+    <p>Same component, second instance — three separate lines in one SVG, each
+      marked <code>[data-draw-scroll-path]</code>, drawn in sequence via
+      <code>data-draw-scroll-stagger</code>. This is the plain stroke case (no
+      mask), and it uses <code>data-draw-scroll-start</code> /
+      <code>data-draw-scroll-end</code> to trigger on a different window than the
+      signature above — the two instances run independently.</p>
+
+    <div
+      class="lines-demo"
+      data-draw-scroll-wrap
+      data-draw-scroll-stagger="0.4"
+      data-draw-scroll-start="clamp(top 80%)"
+      data-draw-scroll-end="clamp(bottom 60%)"
+    >
+      <svg
+        class="lines-demo__svg"
+        data-draw-scroll-desktop
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 400 200"
+        fill="none"
+        aria-hidden="true"
+      >
+        <!-- Each line is a single subpath on purpose: SVG restarts
+             stroke-dasharray at every `M`, so two subpaths in one shape would
+             draw together instead of in sequence. Separate shapes + stagger is
+             how you sequence them. -->
+        <path
+          data-draw-scroll-path
+          d="M20 45C110 12 290 78 380 40"
+          stroke="#e94f37"
+          stroke-width="6"
+          stroke-linecap="round"
+        />
+        <path
+          data-draw-scroll-path
+          d="M20 100C110 67 290 133 380 95"
+          stroke="#3f88c5"
+          stroke-width="6"
+          stroke-linecap="round"
+        />
+        <path
+          data-draw-scroll-path
+          d="M20 155C110 122 290 188 380 150"
+          stroke="#44bba4"
+          stroke-width="6"
+          stroke-linecap="round"
+        />
+      </svg>
     </div>
 
     <p>Tunnel — the <code>[data-tunnel-images]</code> block below stands in for a
