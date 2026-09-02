@@ -61,6 +61,20 @@
       .parallax-demo__box--fast {
         background: #3f88c5;
       }
+      /* Mask reveal: SplitText builds the per-line masks itself, so there is
+         no hidden start state here — the resting state is simply visible. */
+      .mask-demo {
+        container-type: inline-size;
+        margin-bottom: 4rem;
+      }
+      .mask-demo__inner {
+        font-size: 8.4cqw;
+        line-height: 1;
+        font-weight: 700;
+        text-transform: uppercase;
+        white-space: nowrap;
+        text-align: center;
+      }
     </style>
   </head>
   <body data-smooth-scroll-init>
@@ -89,9 +103,22 @@
       </div>
     </div>
 
-    <section data-animate="reveal">Reveal block 1</section>
-    <section data-animate="reveal" data-animate-delay="0.2">Reveal block 2 (delayed)</section>
-    <section data-animate="reveal">Reveal block 3</section>
+    <p>Mask reveal — GSAP SplitText wraps each line in its own mask and
+      ScrollTrigger slides the pieces up on scroll. Granularity comes from
+      <code>[data-split-reveal]</code>: <code>lines</code>, <code>words</code>
+      or <code>chars</code>. No hidden CSS start state, so if the bundle fails
+      to load the text stays visible.</p>
+
+    <div class="mask-demo">
+      <div
+        class="mask-demo__inner"
+        data-split="heading"
+        data-split-reveal="words"
+        data-split-start="bottom 50%"
+      >
+        Our CEO's Foreword
+      </div>
+    </div>
 
     <p>Tunnel — the <code>[data-tunnel-images]</code> block below stands in for a
       hidden div of Webflow-hosted images. Swap these placeholder SVGs for real

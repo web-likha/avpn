@@ -1,10 +1,10 @@
 import { initLocomotiveScroll } from "./lib/locomotive.js";
-import { initReveal } from "./animations/reveal.js";
+import { initSplitReveal } from "./animations/splitReveal.js";
 import { initTunnel } from "./canvas/tunnel.js";
 
 function init() {
   initLocomotiveScroll();
-  initReveal();
+  initSplitReveal();
   initTunnel();
 }
 
