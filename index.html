@@ -27,6 +27,11 @@
         display: block;
         width: 100%;
         height: 80vh;
+      }
+      /* Hero-shaped mount: wide and short, like the AVPN home hero (~2:1). */
+      .tunnel-mount--hero {
+        height: auto;
+        aspect-ratio: 2 / 1;
         margin-bottom: 2rem;
         background: #fff;
       }
@@ -140,6 +145,22 @@
       what ships to Webflow before the assets exist.</p>
 
     <div class="tunnel-mount" data-tunnel-init></div>
+
+    <p>Tunnel 2 — one big floating panel per surface, separated by white gaps
+      and stepping in and out of the corridor walls, with the far end dissolving
+      into haze. Uses its own <code>data-tunnel2-*</code> attributes.</p>
+
+    <div class="tunnel-mount tunnel-mount--hero" data-tunnel2-init>
+      <div data-tunnel2-images>
+        <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%23e94f37'/%3E%3Ctext x='150' y='130' font-size='96' font-family='sans-serif' fill='white' text-anchor='middle'%3E1%3C/text%3E%3C/svg%3E" />
+        <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%23393e41'/%3E%3Ctext x='150' y='130' font-size='96' font-family='sans-serif' fill='white' text-anchor='middle'%3E2%3C/text%3E%3C/svg%3E" />
+        <!-- deliberately extreme shapes, to prove cover-fit crops instead of stretching -->
+        <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='150'%3E%3Crect width='600' height='150' fill='%233f88c5'/%3E%3Ccircle cx='300' cy='75' r='60' fill='white'/%3E%3C/svg%3E" />
+        <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='600'%3E%3Crect width='150' height='600' fill='%23a05fd3'/%3E%3Ccircle cx='75' cy='300' r='60' fill='white'/%3E%3C/svg%3E" />
+        <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%23d3b53d'/%3E%3Ctext x='150' y='130' font-size='96' font-family='sans-serif' fill='white' text-anchor='middle'%3E4%3C/text%3E%3C/svg%3E" />
+        <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%2344bba4'/%3E%3Ctext x='150' y='130' font-size='96' font-family='sans-serif' fill='white' text-anchor='middle'%3E5%3C/text%3E%3C/svg%3E" />
+      </div>
+    </div>
 
     <script type="module" src="/src/index.js"></script>
   </body>
