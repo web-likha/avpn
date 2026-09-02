@@ -118,6 +118,24 @@
         text-transform: uppercase;
         text-align: center;
       }
+      .marquee-demo {
+        overflow: hidden;
+        margin: 0 -2rem 4rem;
+        background: #f7f1ea;
+        color: #007b69;
+      }
+      .marquee-demo__scroll {
+        display: flex;
+        width: max-content;
+        white-space: nowrap;
+      }
+      .marquee-demo__collection {
+        flex: none;
+        padding: 1rem 2rem;
+        font-size: clamp(2.5rem, 8vw, 7rem);
+        font-weight: 700;
+        letter-spacing: -0.06em;
+      }
     </style>
   </head>
   <body data-smooth-scroll-init>
@@ -160,6 +178,24 @@
         data-split-start="bottom 50%"
       >
         Our CEO's Foreword
+      </div>
+    </div>
+
+    <p>Scroll-direction marquee — the track accelerates horizontally with the
+      page and reverses when scrolling upward.</p>
+
+    <div
+      class="marquee-demo"
+      data-marquee-scroll-direction-target
+      data-marquee-speed="10"
+      data-marquee-direction="left"
+      data-marquee-duplicate="2"
+      data-marquee-scroll-speed="20"
+    >
+      <div data-marquee-scroll-target class="marquee-demo__scroll">
+        <div data-marquee-collection-target class="marquee-demo__collection">
+          AVPN · ASIA VENTURE PHILANTHROPY NETWORK ·
+        </div>
       </div>
     </div>
 

@@ -35,6 +35,15 @@ test("initializes the scroll-linked reveal state", async ({ page }) => {
   await expect.poll(() => heading.evaluate((element) => getComputedStyle(element).transform)).not.toBe("none");
 });
 
+test("initializes the scroll-direction marquee", async ({ page }) => {
+  await expect(page.locator("[data-marquee-status='normal']")).toHaveCount(1);
+  expect(await page.locator("[data-marquee-scroll-direction-target]").evaluate((marquee) => ({
+    collections: marquee.querySelectorAll("[data-marquee-collection-target]").length,
+    hasDirectionTrigger: Boolean(marquee._marqueeScrollDirectionInstance?.directionTrigger),
+    hasScrollTrigger: Boolean(marquee._marqueeScrollDirectionInstance?.scrollTimeline?.scrollTrigger),
+  }))).toEqual({ collections: 3, hasDirectionTrigger: true, hasScrollTrigger: true });
+});
+
 test("draws every marked line in each draw-path wrapper", async ({ page }) => {
   const paths = page.locator("[data-draw-scroll-wrap] [data-draw-scroll-path]");
   await expect(paths).toHaveCount(4);

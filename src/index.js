@@ -1,6 +1,7 @@
 import { initLocomotiveScroll } from "./lib/locomotive.js";
 import { initDrawPathScroll } from "./animations/drawPathScroll.js";
 import { initSplitReveal } from "./animations/splitReveal.js";
+import { initMarqueeScrollDirection } from "./animations/marqueeScrollDirection.js";
 import { initTunnel } from "./canvas/tunnel.js";
 import { initTunnel2 } from "./canvas/tunnel2.js";
 
@@ -15,6 +16,7 @@ function init() {
   // state" check in tests/animations.spec.js.
   initDrawPathScroll();
   initSplitReveal();
+  initMarqueeScrollDirection();
   initTunnel();
   initTunnel2();
 }
