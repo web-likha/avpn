@@ -65,7 +65,26 @@ npm install
 npm run dev     # Vite dev server with HMR at index.html — fast local preview
 npm run build   # production build -> dist/animations.min.js
 npm run webflow # rebuild on save + serve dist/ for the live Webflow site
+npm run test:e2e # run Playwright animation smoke tests headlessly
+npm run test:e2e:ui # inspect and replay tests in Playwright's UI mode
+npm run test:e2e:headed # run tests in a visible Chromium window
+npm run test:e2e:install # install the local Chromium browser once
 ```
+
+## Browser testing
+
+Playwright Test is configured in `playwright.config.js` and starts the Vite
+preview on port `4174` for each run. The tests cover component boot, SplitText
+initialization, scroll state changes, WebGL canvas pixels, and a 390px mobile
+viewport. It also checks missing image manifests, resize reinitialization,
+decorative canvas accessibility metadata, and reduced-motion usability.
+Screenshots and traces are retained only when a test fails.
+
+Install Chromium once with `npm run test:e2e:install`, then use
+`npm run test:e2e`. Use `npm run test:e2e:ui` while tuning timing or easing;
+use `npx playwright codegen http://127.0.0.1:4174` to explore selectors for a
+new interaction test. Keep assertions tied to the `data-*` contract, not
+Webflow-generated classes.
 
 `npm run webflow` is the Webflow loop: the published site pulls the bundle off
 this machine, so a save is live on refresh with no republish. See

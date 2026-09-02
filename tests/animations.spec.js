@@ -1,0 +1,87 @@
+import { test, expect } from "@playwright/test";
+
+test.beforeEach(async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  await page.goto("/");
+  await page.waitForLoadState("networkidle");
+  await expect.poll(() => page.locator("canvas").count()).toBeGreaterThan(0);
+  expect(errors, "the preview should boot without browser errors").toEqual([]);
+});
+
+test("boots every preview component", async ({ page }) => {
+  await expect(page.locator('[data-split="heading"] .line')).toHaveCount(1);
+  await expect(page.locator("[data-tunnel-init] canvas")).toHaveCount(2);
+  await expect(page.locator("[data-tunnel2-init] canvas")).toHaveCount(1);
+});
+
+test("WebGL previews allocate live render surfaces", async ({ page }) => {
+  const canvases = page.locator("canvas");
+  const surfaces = await canvases.evaluateAll((items) =>
+    items.map((canvas) => {
+      const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+      return Boolean(gl && canvas.width > 0 && canvas.height > 0 && !gl.isContextLost());
+    }),
+  );
+
+  expect(surfaces).toEqual([true, true, true]);
+});
+
+test("initializes the scroll-linked reveal state", async ({ page }) => {
+  const heading = page.locator('[data-split="heading"] .word').first();
+  await expect.poll(() => heading.evaluate((element) => getComputedStyle(element).transform)).not.toBe("none");
+});
+
+test("tolerates missing image manifests", async ({ page }) => {
+  await page.addInitScript(() => {
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll("[data-tunnel-images], [data-tunnel2-images]").forEach((manifest) => {
+        manifest.remove();
+      });
+    });
+  });
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+
+  await expect(page.locator("[data-tunnel-init] canvas")).toHaveCount(2);
+  await expect(page.locator("[data-tunnel2-init] canvas")).toHaveCount(1);
+});
+
+test("keeps one canvas per instance after a resize", async ({ page }) => {
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.waitForTimeout(250);
+  await expect(page.locator("[data-tunnel-init] canvas")).toHaveCount(2);
+  await expect(page.locator("[data-tunnel2-init] canvas")).toHaveCount(1);
+});
+
+test("keeps decorative rendering out of the accessibility tree", async ({ page }) => {
+  await expect(page.locator("canvas[aria-hidden='true']")).toHaveCount(3);
+  await expect(page.locator("[data-tunnel-images][aria-hidden='true']")).toHaveCount(1);
+  await expect(page.locator("[data-tunnel2-images][aria-hidden='true']")).toHaveCount(1);
+  expect(await page.locator("[tabindex]").evaluateAll((items) =>
+    items.every((item) => Number(item.getAttribute("tabindex")) <= 0),
+  )).toBe(true);
+});
+
+test("remains usable with reduced motion enabled", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+
+  await expect(page.locator("body")).toBeVisible();
+  await expect(page.locator('[data-split="heading"]')).toBeVisible();
+  await expect(page.locator("canvas")).toHaveCount(3);
+});
+
+test("preview remains usable at a mobile viewport", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+
+  await expect(page.locator("body")).toBeVisible();
+  await expect(page.locator("[data-tunnel2-init] canvas")).toHaveCount(1);
+  expect(await page.locator("body").evaluate((body) => body.scrollWidth)).toBeLessThanOrEqual(390);
+});

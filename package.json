@@ -7,7 +7,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "webflow": "node scripts/dev-webflow.mjs"
+    "webflow": "node scripts/dev-webflow.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:install": "playwright install chromium chromium-headless-shell"
   },
   "dependencies": {
     "gsap": "^3.12.5",
@@ -15,6 +20,7 @@
     "three": "^0.185.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "vite": "^8.2.2"
   },
   "allowScripts": {

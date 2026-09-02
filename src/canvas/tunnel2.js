@@ -269,6 +269,7 @@ function setupInstance(container, pool, vars) {
 
   const canvas = document.createElement("canvas");
   canvas.style.cssText = "display:block;width:100%;height:100%";
+  canvas.setAttribute("aria-hidden", "true");
   container.appendChild(canvas);
 
   const measure = () => {
