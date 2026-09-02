@@ -47,7 +47,9 @@ dist/          bundled output pasted into Webflow custom code
 `src/animations/drawPathScroll.js` supports any number of independent wrappers
 and any number of SVG shapes per wrapper. Mark every line you want drawn with
 `data-draw-scroll-path`; the script uses all marked shapes in the active desktop
-or mobile SVG, not just the first one.
+or mobile SVG, not just the first one. Shapes follow DOM order. With the default
+one-unit tween duration, a stagger of `1.05` makes the next stroke begin just
+after the previous one finishes, leaving a small pen-lift pause.
 
 ```html
 <div data-draw-scroll-wrap data-draw-scroll-stagger="0.15">
