@@ -4,10 +4,10 @@ import { gsap, ScrollTrigger } from "../lib/gsap.js";
  * Draw Path on Scroll — based on the Osmo Supply resource, wired into this
  * repo's build and generalized to drive more than one line.
  *
- * Scrubs SVG stroke drawing from 0% to 100% across a wrapper's scroll range,
+ * Scrubs SVG stroke drawing from 0% to 100% across the active SVG's scroll range,
  * with an optional separate SVG for mobile.
  *
- *   [data-draw-scroll-wrap]      the scroll trigger; one timeline per wrapper
+ *   [data-draw-scroll-wrap]      configuration scope; one timeline per wrapper
  *     [data-draw-scroll-desktop] SVG used above 768px
  *       [data-draw-scroll-path]  every marked shape in here draws
  *     [data-draw-scroll-mobile]  optional SVG used at/below 767px
@@ -116,19 +116,28 @@ export function initDrawPathScroll() {
             ease: "linear", // scroll speed controls easing
           },
           scrollTrigger: {
-            trigger: wrap,
-            start, // when the wrapper's top reaches the viewport point
-            end, // when the wrapper's bottom reaches the viewport point
+            // Use the active signature SVG as the trigger. The outer Webflow
+            // component also contains text/photos and can be much taller than
+            // the artwork, which makes the draw feel delayed or instantaneous.
+            // The wrapper still owns the start/end/stagger configuration.
+            trigger: svgToUse,
+            start, // when the active SVG's top reaches the viewport point
+            end, // when the active SVG's bottom reaches the viewport point
             scrub: true,
             invalidateOnRefresh: true,
           },
         });
 
+        // Set every target immediately. A staggered fromTo can leave delayed
+        // targets at their authored SVG state until their turn begins, which
+        // makes the dot visible before the name has finished drawing.
+        gsap.set(paths, { drawSVG: 0 });
+
         // One tween over every shape. With stagger 0 they draw together and the
         // timeline is 1 unit long; with a stagger it grows to
         // 1 + (count - 1) * stagger, and scrub maps whatever that is across the
         // full scroll range, so the drawing still finishes exactly at `end`.
-        tl.fromTo(paths, { drawSVG: 0 }, { drawSVG: "100%", duration: 1, stagger }, 0);
+        tl.to(paths, { drawSVG: "100%", duration: 1, stagger }, 0);
 
         // Keep a reference so we can kill it on breakpoint change
         wrap._drawTl = tl;
