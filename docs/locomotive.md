@@ -126,6 +126,14 @@ attribute belongs on the innermost image alone.
 
 ## Mask reveals (`initSplitReveal`)
 
+> **Historical for the foreword wordmark.** This section describes how that
+> wordmark *used* to animate. It was rebuilt as a plain opacity animation —
+> see "Revealing and fading the wordmark" below — and no element on the Home
+> page carries `data-split*` any more. The component below is still shipped
+> and still works; it just has no live consumer right now. Everything about
+> masking, `clamp()` starts and the IntersectionObserver dead end still
+> applies if you reach for it again.
+
 The big faint "Our CEO's Foreword" wordmark slides up from behind a mask, the
 same way svinogradov.art reveals its year. That site does it in pure CSS — a
 clipped wrapper plus an inner line transitioning from `translateY(150%)` to `0`
@@ -165,16 +173,19 @@ a `position: sticky` wrapper, and a sticky element stops moving once pinned, so
 its own position is a poor scroll reference. Point the trigger at a stable
 ancestor (`.section_sticky-picture`) if a custom start behaves oddly.
 
-### Fading the wordmark out (`initForewordFade`)
+### Revealing and fading the wordmark (`initForewordFade`)
 
-The CEO foreword wordmark also needs to fade to nothing before it overlaps the
-gradient arc lower in the section — but on its own start/end window, not the
-one driving the entrance reveal above. Rather than overload `data-split-opacity`
-with a second, independently-tunable range, that fade lives in its own script,
-`src/animations/forewordAnim.js`:
+**The wordmark no longer uses `initSplitReveal`.** It carries no `data-split*`
+attributes — nothing on the Home page does as of this writing, so
+`initSplitReveal` currently ships in the bundle without a live consumer. The
+wordmark is now driven entirely by a plain opacity animation on the wrap
+itself, in `src/animations/forewordAnim.js`. No SplitText, no masked lines.
 
 ```html
-<div data-foreword-fade-init data-foreword-fade-trigger=".sticky-picture_photo-group">
+<div class="sticky-picture_bgtext-wrap"
+     data-foreword-fade-init
+     data-foreword-fade-cover=".sticky-picture_arc"
+     data-foreword-fade-trigger=".sticky-picture_content">
   Our CEO's Foreword
 </div>
 ```
@@ -182,13 +193,73 @@ with a second, independently-tunable range, that fade lives in its own script,
 | Attribute | Default | Purpose |
 |---|---|---|
 | `data-foreword-fade-init` | — | Marks the element (required) |
-| `data-foreword-fade-trigger` | the element | CSS selector to measure against instead |
-| `data-foreword-fade-start` | `top 10%` | ScrollTrigger start, `"<triggerPoint> <viewportPoint>"` |
-| `data-foreword-fade-end` | `bottom 80%` | ScrollTrigger end, same syntax |
+| `data-foreword-fade-cover` | none | CSS selector for the element painted **over** the wordmark. Held at opacity 0 until this element's bottom edge sweeps past it, then fades in over exactly that sweep. Omit to skip the reveal and start visible. |
+| `data-foreword-fade-trigger` | the element | CSS selector the fade-out is measured against |
+| `data-foreword-fade-end` | `bottom 80%` | ScrollTrigger end for the fade-out, `"<triggerPoint> <viewportPoint>"` |
 
-`scrub: true` ties opacity directly to scroll position each tick, in both
-directions — scrolling back up rewinds the fade for free, with no separate
-reverse animation to write or run.
+Resolution for both selectors is nearest matching ancestor, else first match on
+the page, else the fallback — so a typo degrades to default behaviour instead
+of breaking. Note both current targets are *siblings*, not ancestors, so they
+resolve via the page-wide lookup.
+
+#### Why there are two stages
+
+This is the important part, and it is not a matter of taste — it's a stacking
+conflict. Inside `section_sticky-picture`:
+
+| element | position | z-index |
+|---|---|---|
+| `.sticky-picture_arc` | `absolute; top:0; height:622px` | **1** |
+| `.sticky-picture_bgtext-wrap` | `sticky; top:419px` | **0** |
+| `.padding-global.z-index-2` (heading/photo) | — | 2 |
+
+The arc's background is
+`radial-gradient(92% 88% at 50% 100%, transparent 80%, #fff 100%)` — transparent
+at its bottom-centre, **fully opaque white toward its outer edge** — and it
+outranks the wordmark. The wordmark's natural slot is section-y 112→256 and it
+pins at 419px from the viewport top; both sit inside the arc's 0→622px band.
+
+So wherever the two overlap the arc wins and the wordmark renders as
+washed-out ghost text. **There is no opacity value that looks right there.** It
+has to stay hidden until it physically clears the arc, which is why timing
+tweaks alone could never fix it.
+
+#### How the two stages fit together
+
+1. **Reveal** — triggered off the *cover*, from `bottom top+={pinnedTop +
+   height}` to `bottom top+={pinnedTop}`. That's the exact stretch where the
+   arc's bottom edge sweeps across the wordmark, from touching its bottom to
+   clearing its top, so the reveal tracks the real occlusion instead of a
+   guessed offset.
+2. **Fade-out** — starts where the reveal finishes (same `bottom top+={pinnedTop}`
+   point) and runs via `endTrigger` to the text column's `data-foreword-fade-end`.
+
+Opacity is the **product** of the two (`reveal × (1 − fade)`), so the stages
+can never fight over the same property, and scrolling back up retraces the
+curve exactly — including re-hiding the wordmark as it slides back under the
+arc, which is the whole point.
+
+Both boundaries are **function-based** (`start: () => ...`), so every
+ScrollTrigger refresh re-measures the sticky offset and height rather than
+baking in whatever the layout happened to be at init.
+
+Measured on the published page at a 997px viewport, for orientation:
+
+| scroll | arc bottom | wordmark top | opacity |
+|---|---|---|---|
+| 1000 | 619 | 419 | `0` — still covered |
+| 1056 | 563 | 419 | reveal starts |
+| 1200 | 419 | 419 | `1` — exact handoff, fade begins |
+| 2474 | — | — | `0` — column's bottom 20% up from viewport bottom |
+
+#### A one-way fade was tried and removed
+
+An earlier version clamped progress so opacity could only ever decrease,
+to stop the text reappearing on the way back up. That was a workaround for the
+arc overlap. Once the reveal is gated on the arc itself the clamp is
+unnecessary *and* wrong: the correct behaviour on scroll-up is for the wordmark
+to fade back out as it re-enters the arc band, which the plain bidirectional
+product already does.
 
 ### Why ScrollTrigger and not an IntersectionObserver
 
@@ -236,6 +307,52 @@ const r = document.createRange();
 r.selectNodeContents(document.querySelector('.sticky-picture_bgtext-inner'));
 r.getBoundingClientRect().width / window.innerWidth;   // aim for ~0.96
 ```
+
+---
+
+## Init order and refresh (`src/index.js`)
+
+Two constraints live in `index.js` that aren't obvious from reading it.
+
+### `initDrawPathScroll()` must run before `initSplitReveal()`
+
+`initDrawPathScroll()` calls `ScrollTrigger.refresh()` as part of the upstream
+Osmo resource. A refresh *after* SplitText has initialized makes its `autoSplit`
+re-split the heading, which drops the `gsap.from()` start state and leaves the
+reveal sitting visible instead of hidden. Ordering the draw-path init first
+keeps that refresh ahead of SplitText's setup.
+
+Covered by the "initializes the scroll-linked reveal state" check in
+`tests/animations.spec.js`.
+
+### ScrollTrigger has to be refreshed as images load
+
+Percentage-based ScrollTrigger start/end values (`"bottom 80%"`, `"80% top"`,
+and the function-based bounds in `forewordAnim.js`) are measured against
+element heights **at init time**, which is `DOMContentLoaded` — before images
+below the fold have loaded. Webflow's images carry native lazy-loading, so they
+don't finish loading, and their section stops growing, only once the user
+scrolls near them: well after `window.load`.
+
+A trigger measured against a too-short stub bakes in a wrong scroll distance
+and never re-measures itself. This is not hypothetical — it's what made the
+foreword fade finish at roughly half its intended distance:
+
+| | at init | after images loaded |
+|---|---|---|
+| `[data-ceo-foreword-section]` height | 1465px | 2387px |
+| computed `80% top` end | 2169 | 2906 (correct) |
+
+The wordmark was therefore almost entirely faded by the time it should still
+have been near full opacity. So `index.js` does two things:
+
+- `ScrollTrigger.refresh()` once on `window.load`, for anything resolved by then.
+- A debounced `refresh()` on each already-in-DOM `<img>`'s own `load` event
+  (`watchImagesForRefresh()`), which is what actually catches the lazy ones.
+
+**Any new percentage- or size-derived ScrollTrigger in this repo depends on
+this.** If you see a scroll animation that finishes too early on a page with
+lazy images, suspect a stale measurement before you suspect the timing values.
 
 ---
 
@@ -333,6 +450,8 @@ tag points there once it's added. Save → refresh the published page.
 | A caption below the image gets covered by it | `data-scroll-speed` is on a group rather than the image alone, so the whole card drifts downward over its neighbours. |
 | Nothing loads on the live site | Dev server isn't running, you're in Safari, or the site was never published after the footer tag was added. |
 | Scroll-triggered reveals fire at the wrong scroll position once Locomotive is on | Check the `ScrollTrigger.update` wiring in `locomotive.js` hasn't been removed or reordered relative to `initSplitReveal()` in `index.js`. |
+| A scroll animation finishes far too early on a page with lazy images | Stale measurement: the trigger was sized before its images loaded. See "ScrollTrigger has to be refreshed as images load" — check `watchImagesForRefresh()` is still wired up in `index.js`. |
+| The foreword wordmark shows as washed-out ghost text at the top of the section | It's rendering underneath `.sticky-picture_arc` (z-index 1 vs 0, opaque white outer edge). Check `data-foreword-fade-cover` is still set to `.sticky-picture_arc` on the wrap — without it the reveal is skipped and the wordmark starts visible while covered. |
 
 ---
 
