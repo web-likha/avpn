@@ -33,6 +33,7 @@ test("WebGL previews allocate live render surfaces", async ({ page }) => {
 test("initializes the scroll-linked reveal state", async ({ page }) => {
   const heading = page.locator('[data-split="heading"] .word').first();
   await expect.poll(() => heading.evaluate((element) => getComputedStyle(element).transform)).not.toBe("none");
+  await expect.poll(() => heading.evaluate((element) => Boolean(element.closest('[data-split="heading"]')?._splitOpacityTween?.scrollTrigger))).toBe(true);
 });
 
 test("initializes the scroll-direction marquee", async ({ page }) => {
