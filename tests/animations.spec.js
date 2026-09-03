@@ -33,7 +33,10 @@ test("WebGL previews allocate live render surfaces", async ({ page }) => {
 test("initializes the scroll-linked reveal state", async ({ page }) => {
   const heading = page.locator('[data-split="heading"] .word').first();
   await expect.poll(() => heading.evaluate((element) => getComputedStyle(element).transform)).not.toBe("none");
-  await expect.poll(() => heading.evaluate((element) => Boolean(element.closest('[data-split="heading"]')?._splitOpacityTween?.scrollTrigger))).toBe(true);
+  await expect.poll(() => heading.evaluate((element) => {
+    const triggers = element.closest("[data-foreword-fade-init]")?._forewordFadeTriggers;
+    return Array.isArray(triggers) && triggers.length > 0 && triggers.every((trigger) => Number.isFinite(trigger.start) && Number.isFinite(trigger.end));
+  })).toBe(true);
 });
 
 test("initializes the scroll-direction marquee", async ({ page }) => {

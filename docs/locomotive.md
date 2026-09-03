@@ -356,6 +356,89 @@ lazy images, suspect a stale measurement before you suspect the timing values.
 
 ---
 
+## Testing against the live Webflow site
+
+There are two suites, and they answer different questions.
+
+| | `npm run test:e2e` | `npm run test:e2e:live` |
+|---|---|---|
+| Config | `playwright.config.js` | `playwright.live.config.js` |
+| Page under test | `index.html` (local preview) | `https://avpn-25-26.webflow.io` |
+| Answers | "does our code initialize?" | "does it behave correctly against real Webflow DOM and CSS?" |
+| Scrolls | never | yes |
+| Speed | ~7s | ~40s |
+| When | every commit | manually, when touching scroll behaviour |
+
+The demo suite has no visibility into Webflow's markup, styles, or lazy images —
+so none of the arc/stacking or stale-measurement bugs were catchable there. The
+live suite exists for exactly that class of bug.
+
+`testIgnore: "live/**"` keeps the live specs out of the default run.
+
+### The bundle is injected, not fetched
+
+The published page's footer requests `http://localhost:4173/animations.min.js`,
+but **Playwright's Chromium refuses to load it**:
+
+```
+Access to script at 'http://localhost:4173/animations.min.js' from origin
+'https://avpn-25-26.webflow.io' has been blocked by CORS policy:
+Permission was denied for this request to access the `loopback` address space.
+```
+
+That's Chrome's Private Network Access enforcement. Your everyday Chrome allows
+it; Playwright's does not, and
+`--disable-features=BlockInsecurePrivateNetworkRequests` no longer switches it
+off (the feature has been renamed upstream).
+
+So the suite doesn't rely on the dev server being reachable *from the browser*
+at all. It intercepts the request and serves `dist/animations.min.js` straight
+off disk:
+
+```js
+await page.route("**/animations.min.js", (route) =>
+  route.fulfill({ path: BUNDLE_PATH, contentType: "application/javascript" }));
+```
+
+This is more robust than fighting browser flags, and it pins each run to your
+exact local build. The `webServer` entry still runs `npm run webflow`
+(`reuseExistingServer: true`, so it adopts one you already have running) purely
+to guarantee `dist/` is freshly built — `build({ watch: {} })` completes an
+initial build before the server comes up.
+
+### Why image requests are deliberately delayed
+
+`LAZY_IMAGE_DELAY` holds every image response for 1.2s. This is not padding —
+**without it the suite cannot catch the stale-measurement bug.** Verified by
+mutation: with the `ScrollTrigger.refresh()` wiring removed from `index.js`,
+
+- undelayed, all four tests still **passed** — headless loads images fast enough
+  that the section reaches full height before the measurement matters;
+- delayed, the fade-bounds test **failed** with `expected 1403 to be within 2px
+  of 2325`, a 922px error.
+
+The delay reproduces the real-world timing of a lazy image resolving after
+`load`. Don't remove it thinking it's a speed tax.
+
+### Driving scroll under Lenis
+
+`window.scrollBy()` does nothing — Lenis owns the wheel. Tests drive with
+`page.mouse.wheel()` toward a target and poll `window.scrollY` until it stops
+changing (`settledScrollY`), because smooth scroll is lerped and a value read
+immediately after a scroll is a mid-animation frame. Assert on numbers
+(`ScrollTrigger.progress`, computed `opacity`, `getBoundingClientRect()`), never
+screenshots.
+
+### What it costs you
+
+Chromium only, not CI-able, and the DOM side isn't version-pinned — your JS is
+whatever you just built, the markup is whatever is currently published. A
+Designer edit can turn the suite red without any code change. That is an
+acceptable trade *because the run is manual*; don't wire it into CI expecting
+stability.
+
+---
+
 ## Tuning
 
 Only one option is currently passed at init, in `src/lib/locomotive.js`:
