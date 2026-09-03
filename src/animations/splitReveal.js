@@ -36,6 +36,10 @@ const TYPES_TO_SPLIT = {
  *
  * [data-split-once] — "false" replays the reveal every time it re-enters.
  *
+ * [data-split-opacity] — "true" scrubs each split target from its normal
+ * opacity to zero as the section leaves view. This is opt-in so instances that
+ * only need the vertical reveal are unchanged.
+ *
  * Uses ScrollTrigger rather than an IntersectionObserver on purpose. A masked
  * element cannot observe itself: IntersectionObserver clips its intersection
  * rect against ancestors' `overflow` AND `clip-path`, so a line parked outside
@@ -53,6 +57,8 @@ export function initSplitReveal() {
   headings.forEach((heading) => {
     // Idempotent re-init: undo a previous split before making a new one,
     // otherwise splits stack and animations pile up on each other.
+    heading._splitOpacityTween?.kill();
+    heading._splitOpacityTween = null;
     heading._splitInstance?.revert();
 
     const type = heading.getAttribute("data-split-reveal") || "lines";
@@ -60,6 +66,7 @@ export function initSplitReveal() {
     const config = SPLIT_CONFIG[type] || SPLIT_CONFIG.lines;
     const start = heading.getAttribute("data-split-start") || "clamp(top 80%)";
     const once = heading.getAttribute("data-split-once") !== "false";
+    const animateOpacity = heading.getAttribute("data-split-opacity") === "true";
     const trigger = resolveTrigger(heading);
 
     heading._splitInstance = SplitText.create(heading, {
@@ -71,6 +78,19 @@ export function initSplitReveal() {
       charsClass: "letter",
       onSplit(instance) {
         const targets = instance[type] || instance.lines;
+
+        if (animateOpacity) {
+          heading._splitOpacityTween = gsap.to(targets, {
+            opacity: 0,
+            ease: "none",
+            scrollTrigger: {
+              trigger,
+              start: "top 20%",
+              end: "bottom 20%",
+              scrub: true,
+            },
+          });
+        }
 
         return gsap.from(targets, {
           yPercent: 110,

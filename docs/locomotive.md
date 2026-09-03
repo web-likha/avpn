@@ -153,6 +153,7 @@ Nothing about the reveal lives in Webflow styles.
 | `data-split-reveal` | `lines` | `lines` \| `words` \| `chars` |
 | `data-split-start` | `clamp(top 80%)` | ScrollTrigger start, `"<triggerPoint> <viewportPoint>"` |
 | `data-split-trigger` | the element | CSS selector to measure against instead |
+| `data-split-opacity` | disabled | `"true"` scrubs split targets to opacity 0 before the section ends |
 | `data-split-once` | `true` | `"false"` replays on re-entry |
 
 `clamp()` on the default start stops it resolving above the top of the page,
