@@ -165,6 +165,31 @@ a `position: sticky` wrapper, and a sticky element stops moving once pinned, so
 its own position is a poor scroll reference. Point the trigger at a stable
 ancestor (`.section_sticky-picture`) if a custom start behaves oddly.
 
+### Fading the wordmark out (`initForewordFade`)
+
+The CEO foreword wordmark also needs to fade to nothing before it overlaps the
+gradient arc lower in the section — but on its own start/end window, not the
+one driving the entrance reveal above. Rather than overload `data-split-opacity`
+with a second, independently-tunable range, that fade lives in its own script,
+`src/animations/forewordAnim.js`:
+
+```html
+<div data-foreword-fade-init data-foreword-fade-trigger=".sticky-picture_photo-group">
+  Our CEO's Foreword
+</div>
+```
+
+| Attribute | Default | Purpose |
+|---|---|---|
+| `data-foreword-fade-init` | — | Marks the element (required) |
+| `data-foreword-fade-trigger` | the element | CSS selector to measure against instead |
+| `data-foreword-fade-start` | `top 10%` | ScrollTrigger start, `"<triggerPoint> <viewportPoint>"` |
+| `data-foreword-fade-end` | `bottom 80%` | ScrollTrigger end, same syntax |
+
+`scrub: true` ties opacity directly to scroll position each tick, in both
+directions — scrolling back up rewinds the fade for free, with no separate
+reverse animation to write or run.
+
 ### Why ScrollTrigger and not an IntersectionObserver
 
 This was built with a hand-rolled IntersectionObserver first, and it could not

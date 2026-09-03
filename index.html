@@ -168,17 +168,23 @@
       ScrollTrigger slides the pieces up on scroll. Granularity comes from
       <code>[data-split-reveal]</code>: <code>lines</code>, <code>words</code>
       or <code>chars</code>. No hidden CSS start state, so if the bundle fails
-      to load the text stays visible.</p>
+      to load the text stays visible. The fade-out on this one is a separate,
+      section-specific scrub — see <code>forewordAnim.js</code> — since it
+      needs its own start/end window instead of tracking the entrance
+      trigger.</p>
 
-    <div class="mask-demo">
-      <div
-        class="mask-demo__inner"
-        data-split="heading"
-        data-split-reveal="words"
-        data-split-start="bottom 50%"
-        data-split-opacity="true"
-      >
-        Our CEO's Foreword
+    <div class="mask-demo__trigger">
+      <div class="mask-demo">
+        <div
+          class="mask-demo__inner"
+          data-split="heading"
+          data-split-reveal="words"
+          data-split-start="bottom 50%"
+          data-foreword-fade-init
+          data-foreword-fade-trigger=".mask-demo__trigger"
+        >
+          Our CEO's Foreword
+        </div>
       </div>
     </div>
 
