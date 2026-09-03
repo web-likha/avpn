@@ -4,6 +4,7 @@ import { initDrawPathScroll } from "./animations/drawPathScroll.js";
 import { initSplitReveal } from "./animations/splitReveal.js";
 import { initMarqueeScrollDirection } from "./animations/marqueeScrollDirection.js";
 import { initForewordFade } from "./animations/forewordAnim.js";
+import { initHighlightDrum } from "./animations/highlightDrum.js";
 import { initTunnel } from "./canvas/tunnel.js";
 import { initTunnel2 } from "./canvas/tunnel2.js";
 
@@ -13,6 +14,7 @@ function init() {
   initSplitReveal();
   initMarqueeScrollDirection();
   initForewordFade();
+  initHighlightDrum();
   initTunnel();
   initTunnel2();
   watchImagesForRefresh();

@@ -136,6 +136,69 @@
         font-weight: 700;
         letter-spacing: -0.06em;
       }
+
+      /* --- Key Highlights drum ------------------------------------------
+         Mirrors the Webflow classes (layout) plus the .page-style embed
+         (perspective, mask, fog, caption states) so the preview and the live
+         section stay one design. --------------------------------------- */
+      .section_highlights { position: relative; height: 300vh; overflow: clip; }
+      .highlights_sticky { position: sticky; top: 0; display: flex; align-items: center; width: 100%; height: 100vh; overflow: hidden; background-image: linear-gradient(0deg, #f27c38 30%, #f7f1ea 98%); }
+      .highlights_padding { padding-left: 5%; padding-right: 5%; position: relative; z-index: 2; }
+      .highlights_container { width: 100%; max-width: 90rem; margin: 0 auto; }
+      .highlights_layout { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; column-gap: 1.5rem; width: 100%; }
+      .highlights_intro { display: flex; flex-direction: column; align-items: flex-start; row-gap: 1.625rem; max-width: 12.5rem; }
+      .highlights_eyebrow { margin: 0; color: #fff; font-size: 2.25rem; line-height: 1.111; font-weight: 600; }
+      .highlights_counter { display: flex; align-items: center; column-gap: 1.4375rem; color: #fff; font-size: 2.25rem; line-height: 1.111; font-weight: 600; }
+      .highlights_counter-dot { width: 1rem; height: 1rem; border-radius: 50%; background-color: #fcdccd; }
+      .highlights_drum-col { width: min(42rem, 47vw); max-width: 100%; }
+      .highlights_drum { position: relative; width: 100%; background-color: #fff; border-radius: 62.5rem; color: #002944; font-size: min(8.25rem, 9.3vw); font-weight: 800; line-height: 1.36; text-align: center; }
+      .highlights_number { position: relative; padding: 0.4em 0.35em; white-space: nowrap; }
+      .highlights_number.is-stacked { position: absolute; inset: 0; }
+      .highlights_caption-col { position: relative; justify-self: end; width: 100%; max-width: 21rem; }
+      .highlights_caption { margin: 0; color: #fff; font-size: 2.25rem; line-height: 1.111; font-weight: 700; }
+      .highlights_caption.is-stacked { position: absolute; top: 0; left: 0; width: 100%; }
+      .highlights_scroll-hint { position: absolute; left: 50%; bottom: 4.5rem; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; column-gap: 0.9375rem; width: max-content; padding: 0.75rem; border-radius: 1.25rem; background-color: rgba(255,255,255,0.1); color: #fff; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+      .highlights_scroll-icon { width: 1.5rem; height: 1.5rem; }
+      .highlights_scroll-icon svg { display: block; width: 100%; height: 100%; }
+      .highlights_scroll-label { font-size: 1.125rem; line-height: 1.444; text-transform: uppercase; }
+
+      [data-highlight-drum-track] { perspective: 2.16em; clip-path: inset(0 round 62.5rem); }
+      [data-highlight-drum-track]::before {
+        content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+        background-image: linear-gradient(180deg,
+          rgb(255 255 255 / 1) 0%,
+          rgb(255 255 255 / 0.2) 20.44%,
+          rgb(255 255 255 / 0) 27.07%,
+          rgb(255 255 255 / 0) 72.93%,
+          rgb(255 255 255 / 0.2) 77.35%,
+          rgb(255 255 255 / 1) 100%);
+      }
+      [data-highlight-drum-item] { transform-style: preserve-3d; will-change: transform, opacity; }
+      [data-highlight-drum-title] {
+        opacity: 0; transform: translateY(3.9em);
+        transition: opacity 0.8s cubic-bezier(0.77, 0, 0.175, 1),
+                    transform 0.8s cubic-bezier(0.77, 0, 0.175, 1);
+      }
+      [data-highlight-drum-title][data-highlight-drum-state="active"] { opacity: 1; transform: translateY(0); }
+      [data-highlight-drum-title][data-highlight-drum-state="prev"] { opacity: 0; transform: translateY(-3.9em); }
+
+      @media screen and (max-width: 991px) {
+        .highlights_layout { grid-template-columns: 1fr; justify-items: center; row-gap: 2.5rem; text-align: center; }
+        .highlights_intro { align-items: center; row-gap: 1rem; max-width: none; }
+        .highlights_eyebrow, .highlights_counter, .highlights_caption { font-size: 1.75rem; }
+        .highlights_drum-col { width: min(26rem, 80vw); }
+        .highlights_drum { font-size: min(5rem, 15.5vw); }
+        .highlights_caption-col { justify-self: center; max-width: 26rem; }
+        .highlights_scroll-hint { bottom: 2.5rem; }
+      }
+      @media screen and (max-width: 479px) {
+        .highlights_drum-col { width: 88vw; }
+        .highlights_drum { font-size: 15.5vw; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        [data-highlight-drum-item] { transform: none !important; }
+        [data-highlight-drum-title] { transition-duration: 0.01ms; }
+      }
     </style>
   </head>
   <body data-smooth-scroll-init>
@@ -356,6 +419,48 @@
         <img alt="" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='300' height='200' fill='%2344bba4'/%3E%3Ctext x='150' y='130' font-size='96' font-family='sans-serif' fill='white' text-anchor='middle'%3E5%3C/text%3E%3C/svg%3E" />
       </div>
     </div>
+
+
+    <p>Key Highlights — a scroll-driven number drum. The section is its own
+      scrub distance; the sticky child does the pinning. Numbers are scrubbed
+      continuously, captions and the counter step on the active index.</p>
+
+    <section class="section_highlights" data-highlight-drum-init>
+      <div class="highlights_sticky">
+        <div class="highlights_padding">
+          <div class="highlights_container">
+            <div class="highlights_layout">
+              <div class="highlights_intro">
+                <h2 class="highlights_eyebrow">Key Highlights</h2>
+                <div class="highlights_counter">
+                  <div class="highlights_counter-index" data-highlight-drum-counter>01</div>
+                  <div class="highlights_counter-dot"></div>
+                  <div class="highlights_counter-total" data-highlight-drum-total>03</div>
+                </div>
+              </div>
+              <div class="highlights_drum-col">
+                <div class="highlights_drum" data-highlight-drum-track>
+                  <div class="highlights_number" data-highlight-drum-item>103</div>
+                  <div class="highlights_number is-stacked" data-highlight-drum-item>15,900</div>
+                  <div class="highlights_number is-stacked" data-highlight-drum-item>980,000</div>
+                </div>
+              </div>
+              <div class="highlights_caption-col">
+                <p class="highlights_caption" data-highlight-drum-title data-highlight-drum-state="active">USD 103 Million catalysed by AVPN</p>
+                <p class="highlights_caption is-stacked" data-highlight-drum-title>Over 15,900 connections facilitated</p>
+                <p class="highlights_caption is-stacked" data-highlight-drum-title>Over 980,000 end beneficiaries impacted</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="highlights_scroll-hint" aria-hidden="true">
+          <div class="highlights_scroll-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="5.25" y="2.75" width="13.5" height="18.5" rx="6.75"/><path d="M12 7.25v3"/></svg>
+          </div>
+          <div class="highlights_scroll-label">Scroll more</div>
+        </div>
+      </div>
+    </section>
 
     <script type="module" src="/src/index.js"></script>
   </body>
