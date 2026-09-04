@@ -217,12 +217,20 @@ plain CSS/SVG in Webflow, not a component. Likewise the intro's arrow button.
 The curved text is built as one SVG `textPath` embed per wheel panel; see
 "The arc text" in `docs/webflow-programmes-highlights-build.md`.
 
-The dotted connector curves (`Vector 98`) go through the existing
-`drawPathScroll` component, which is now band-aware. One caveat: DrawSVG works
-by animating `stroke-dasharray`, so it owns that property — a stroke can be
-drawn on scroll *or* dotted, not both. If the connectors must stay dotted, draw
-them as a dotted path inside a `clipPath` and animate the clip instead, or ship
-them as a static dotted SVG.
+The connector curves (`Vector 98`) go through the existing `drawPathScroll`
+component, which is now band-aware, and are built — see "The connector lines" in
+`docs/webflow-programmes-highlights-build.md`. One caveat, confirmed in the
+build: DrawSVG works by animating `stroke-dasharray`, so it owns that property —
+a stroke can be drawn on scroll *or* dotted, not both. The shipped lines are
+solid for exactly this reason. If a connector must stay dotted, draw it as a
+dotted path inside a `clipPath` and animate the clip instead, or ship it as a
+static dotted SVG.
+
+Anything drawn across a **pinned** panel needs care: while the pin holds, the
+stage stands still and the track keeps scrolling, so a track-anchored path
+slides relative to the pinned content by the whole pin distance. Anchoring that
+piece inside the stage instead is what keeps it registered to the disc — the
+`is-in-stage` pattern in the build guide.
 
 ---
 
