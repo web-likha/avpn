@@ -21,6 +21,9 @@ every class in the component, state as a combo (`is-*`).
 section.section_programmes-highlights.prog-highlights_scroller   [data-hscroll-init]
 └ div.prog-highlights_viewport                                   [data-hscroll-viewport]
   └ div.prog-highlights_track                                    [data-hscroll-track]
+    ├ div.prog-highlights_line.is-line-1                     [data-draw-scroll-wrap]
+    ├ div.prog-highlights_line.is-line-2                     [data-draw-scroll-wrap]
+    ├ div.prog-highlights_line.is-line-3                     [data-draw-scroll-wrap]
     ├ div.prog-highlights_panel.is-intro                              60vw
     │ └ div.prog-highlights_intro-content
     │   ├ div.prog-highlights_eyebrow
@@ -39,6 +42,8 @@ section.section_programmes-highlights.prog-highlights_scroller   [data-hscroll-i
     │
     ├ div.prog-highlights_panel.is-thematic.is-wheel                  [data-rotary-wheel-init]
     │ └ div.prog-highlights_stage                                     [data-rotary-wheel-stage]
+    │   ├ div.prog-highlights_line.is-in-stage              [data-draw-scroll-wrap]
+    │   │ └ svg > path                                      "Line 2 stub"
     │   ├ div.prog-highlights_disc.is-thematic              [aria-hidden="true"]
     │   ├ HtmlEmbed.prog-highlights_arc                     "Arc text — thematic"
     │   └ div.prog-highlights_hub                                     [data-rotary-wheel-hub]
@@ -65,11 +70,10 @@ a real image via `set_image_asset` (or the Designer) once AVPN supplies one;
 the class already carries the sizing/radius/`background-size: cover` a
 background-image needs.
 
-Per this build's brief, the dotted connector curve and the intro's arrow
-button from the Figma were **not** built — the section works without them.
-`drawPathScroll` (already band-aware, see `docs/horizontal-scroller.md`) is
-the natural home for the connector whenever it's added. The curved copy around
-each wheel *was* built later — see "The arc text" below.
+Two things from the Figma were **not** built under this build's brief: the
+intro's arrow button, and nothing else outstanding. The curved copy around each
+wheel and the connector line threading the band *were* both built later — see
+"The arc text" and "The connector lines" below.
 
 ---
 
@@ -274,6 +278,122 @@ radius and size alone leave the left string about 20° short of the mock's
 
 ---
 
+## The connector lines
+
+The line threading through the band, drawn on scroll by `drawPathScroll`. Three
+lines plus one stub, all built as native Designer `DOM` elements (`svg` > `path`
+with `set_dom_config`), matching how `.highlights_draw_sticky` and
+`.explore-links_line` are already authored — not as HTML embeds.
+
+Stroke params are copied from those two: `stroke="white"`, `stroke-width="5"`,
+`fill="none"` on the SVG, `width="100%"`. The authored `stroke-dasharray="10 10"`
+is **inert** — DrawSVG overwrites `stroke-dasharray` at runtime to do the
+reveal, so these lines draw solid. A line can be dotted *or* drawn, not both;
+dotted-and-drawn needs the `clipPath` route from `docs/horizontal-scroller.md`.
+
+### A line spans panels, so it hangs off the track
+
+A line covers one or more whole panels, and panels are flex siblings, so a line
+cannot be a child of any of them. Each is an absolutely-positioned overlay on
+`.prog-highlights_track` (which carries `position: relative` for this), sized
+from the panel-width variables in `.page-style` section 6:
+
+| Element | Anchored to | `left` | `width` |
+|---|---|---|---|
+| `is-line-1` | track | `0` | intro + intro-media + title |
+| `is-in-stage` | **thematic stage** | `0` | `100%` |
+| `is-line-2` | track | intro + intro-media + title + wheel-4 | title |
+| `is-line-3` | track | + title + wheel-4 again | title |
+
+`.prog-highlights_panel` gets `position: relative; z-index: 1` and the overlays
+`z-index: 0`, so panel content — discs, cards, the intro photo — paints over the
+lines. Do **not** reach for `z-index: -1` instead: that drops the line behind the
+section's own gradient and it disappears entirely.
+
+Offsets are built from the width variables rather than hard-coded, because a
+line's `left` is the sum of every panel before it — copy those numbers and they
+drift the first time a panel is resized. Verified live at 1728×997: track
+`18358px`, `is-line-2` at `7682`, which is exactly
+`60vw + (40vw + 15rem) + 100vw + (100vw + 240vh)`. Note `100vh` resolves to 941
+there, not the 997 of `innerHeight`; the arithmetic still lands because the CSS
+and the check use the same unit.
+
+### Why `preserveAspectRatio="none"`, and why no `vector-effect`
+
+Every other drawn SVG on the site sits in a fixed-aspect container, so the
+default `meet` works and none of them set either attribute. The band is the
+first case where the container's proportions move with the viewport — a panel is
+`calc(100vw + 240vh)` — so `meet` would letterbox and the line would stop short
+of the panel edges. Each line therefore stretches, with its `viewBox` authored
+near its own overlay's aspect so the stretch factor stays near 1 and strokes
+don't go anisotropic.
+
+`vector-effect="non-scaling-stroke"` is the obvious-looking fix for the stroke
+and is **actively wrong here**: DrawSVG measures with `getTotalLength()` in user
+units and writes `stroke-dasharray` in them, while `non-scaling-stroke` makes
+the browser resolve that dash pattern in screen units. The two disagree and the
+reveal breaks — typically snapping to fully-drawn.
+
+### Trigger ranges
+
+Inside a band `drawPathScroll` swaps its defaults to the horizontal axis, and an
+authored start/end has to be written in that axis too. All four lines use:
+
+```
+data-draw-scroll-start = "clamp(left right)"
+data-draw-scroll-end   = "clamp(right center)"
+```
+
+**Keep the `clamp()`.** Without it the first line starts part-drawn: `left right`
+means "the wrapper's left edge reaches the scroller's right edge", which for a
+line at track `x: 0` is a moment ~one viewport *before* the band begins. That
+start is out of range, so the timeline is already ~46% run at band entry —
+measured, before the clamp was added. `clamp()` pulls it into the valid range,
+and is a no-op for the middle lines.
+
+`end` is `right center`, not `right left`: `right left` completes the draw only
+once the line's end has crossed off the left of the screen, so the last stroke
+is always drawn out of sight. `right center` finishes it mid-screen. On line 1
+that moved completion from `scrollLeft 1968` to `1129`.
+
+### The stub, and why a pinned wheel needs one
+
+Line 2 is meant to emerge from behind the thematic disc. It cannot simply start
+under the disc, because **while the wheel is pinned its stage is held still
+while the track keeps scrolling** — the disc sweeps ~2258px (the pin distance)
+relative to the track. A path start at a fixed track `x` is under the disc for
+only one moment of the pin and pokes out either side of it.
+
+So the emerging piece is a separate overlay *inside the pinned stage*
+(`.prog-highlights_line.is-in-stage`), which makes it move with the disc instead
+of with the track. It is prepended **before** the disc in the stage, so the disc
+paints over it.
+
+The two pieces meet without ever tearing apart, and the reason is worth keeping:
+
+- while pinned, the stage's right edge is fixed at the viewport's right edge, and
+  `is-line-2` — which starts at the *next* panel's left edge — is still off-screen
+  to the right, so the join is never on screen;
+- when the pin releases, the stage has travelled exactly its pin distance and its
+  right edge now coincides with that panel boundary, so stub and line are
+  contiguous and from then on both move with the track.
+
+Measured live: the stub holds at screen `1049–1728` throughout the pin, then
+tracks left with everything else.
+
+`is-in-stage` (`left: 0; width: 100%`) is reusable — the community and impact
+wheels need the same treatment if a line should emerge from either of them.
+
+### The paths are traced, not exported
+
+All four `d` values were authored by hand from the design mockups, not exported
+from Figma, so the curvature is an approximation of the intended beziers. If
+exact curves are wanted later, swap the `d` on each path — the structure,
+offsets and triggers do not change. Each export needs to be drawn at that line's
+own span: line 1 across three panels (~3.9:1), the others one panel each.
+
+---
+
 ## Rebuilding or extending this
 
 - **Card count changes.** Add/remove a `.prog-highlights_item` under the
@@ -285,6 +405,10 @@ radius and size alone leave the left string about 20° short of the mock's
   `prog-highlights_panel`, then a second `is-<name>.is-wheel` 3-way combo for
   the width/pin-distance override. Copy the arc embed too, and give its two
   paths ids no other embed uses.
+- **New line.** Add a `.prog-highlights_line.is-line-N` combo with `left` and
+  `width` built from the panel-width variables, then a `div` > `svg` > `path`
+  of `DOM` elements under the track. No `.page-style` edit is needed — section 6
+  holds only the variables and the shared `svg` rule.
 - **Verify after any bulk build.** Query for Webflow's default placeholder
   strings (`"This is some text inside of a div block."` for Text Blocks,
   `"Heading"` / `"Lorem ipsum"` for others) across the section before calling
