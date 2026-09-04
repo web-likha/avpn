@@ -214,6 +214,8 @@ the *layout* inside each stage, not the panel widths to author.
 
 The 932px rim disc and its curved text are **static** — no rotation — so they're
 plain CSS/SVG in Webflow, not a component. Likewise the intro's arrow button.
+The curved text is built as one SVG `textPath` embed per wheel panel; see
+"The arc text" in `docs/webflow-programmes-highlights-build.md`.
 
 The dotted connector curves (`Vector 98`) go through the existing
 `drawPathScroll` component, which is now band-aware. One caveat: DrawSVG works

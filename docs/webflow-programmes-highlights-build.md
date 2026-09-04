@@ -40,6 +40,7 @@ section.section_programmes-highlights.prog-highlights_scroller   [data-hscroll-i
     ├ div.prog-highlights_panel.is-thematic.is-wheel                  [data-rotary-wheel-init]
     │ └ div.prog-highlights_stage                                     [data-rotary-wheel-stage]
     │   ├ div.prog-highlights_disc.is-thematic              [aria-hidden="true"]
+    │   ├ HtmlEmbed.prog-highlights_arc                     "Arc text — thematic"
     │   └ div.prog-highlights_hub                                     [data-rotary-wheel-hub]
     │     └ div.prog-highlights_item × 4                              [data-rotary-wheel-item]
     │       └ div.prog-highlights_card
@@ -67,7 +68,8 @@ background-image needs.
 Per this build's brief, the dotted connector curve and the intro's arrow
 button from the Figma were **not** built — the section works without them.
 `drawPathScroll` (already band-aware, see `docs/horizontal-scroller.md`) is
-the natural home for the connector whenever it's added.
+the natural home for the connector whenever it's added. The curved copy around
+each wheel *was* built later — see "The arc text" below.
 
 ---
 
@@ -170,6 +172,108 @@ Webflow accepted both, contrary to what gotcha #2 below would predict.
 
 ---
 
+## The arc text
+
+Each wheel's section copy is curved around the card in two mirrored arcs, one
+reading up the left side and one down the right, with the cards painting over
+them. Reference: the Figma mock, and the same device on
+days.christou1910.com — though Christou's is a flat PNG
+(`slider-comfy-1.png`, 350×1128), so none of its geometry is readable from
+their DOM and none of it was copied.
+
+One `HtmlEmbed.prog-highlights_arc` per wheel panel, inserted **between the
+disc and the hub** — that DOM order is what puts the text behind the cards
+without a `z-index`. The wrapper class centres it on the hub the way the disc
+is centred, at `100vh` square with `pointer-events: none`:
+
+```css
+.prog-highlights_arc {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 100vh; height: 100vh;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+```
+
+The embed holds nothing but the SVG; the type lives once in `.page-style`
+(section 5) rather than three times in the embeds:
+
+```html
+<svg class="prog-highlights_arc-svg" viewBox="0 0 100 100" aria-hidden="true">
+  <defs>
+    <path id="arcThematicL" fill="none" d="M 50 95 A 45 45 0 0 1 50 5" />
+    <path id="arcThematicR" fill="none" d="M 50 5 A 45 45 0 0 1 50 95" />
+  </defs>
+  <text><textPath href="#arcThematicL" startOffset="50%" text-anchor="middle">Strengthening engagements</textPath></text>
+  <text><textPath href="#arcThematicR" startOffset="50%" text-anchor="middle">in thematic areas</textPath></text>
+</svg>
+```
+
+| Panel | Left arc | Right arc | Path ids |
+|---|---|---|---|
+| Thematic | Strengthening engagements | in thematic areas | `arcThematicL` / `arcThematicR` |
+| Community | Expanding our | Community | `arcCommunityL` / `arcCommunityR` |
+| Impact | Deepening | our Impact | `arcImpactL` / `arcImpactR` |
+
+Path ids must stay unique per embed — three copies of one id would send all
+six runs to whichever path the document sees first.
+
+### Why two paths rather than one
+
+Both arcs run **clockwise** (sweep flag `1`) with opposite endpoints. That is
+what makes the left read bottom-to-top and the right top-to-bottom while both
+keep their letters facing outward; a single shared path can only do that on
+one side. Reversing a side is a matter of swapping its endpoints, not its
+sweep flag.
+
+`startOffset="50%"` with `text-anchor="middle"` centres each run on its own
+half, so the gaps at 12 and 6 o'clock open by themselves and resize with the
+copy — no offsets to retune when the text changes.
+
+### Where the numbers come from
+
+Geometry is authored in viewBox units on a `0 0 100 100` box that the wrapper
+maps to a `100vh` square, so **1 unit = 1% of the stage height** and every
+value scales with the viewport — the same basis the disc, cards, and wheel
+radius already use.
+
+Both numbers were measured off the Figma mock by circle-fitting its arcs
+pixel-wise (per-row ink centroid, Kåsa fit), not estimated by eye:
+
+| | left arc | right arc |
+|---|---|---|
+| fitted radius | 409.8px | 401.4px |
+| stage height in the mock | 895px | 895px |
+| **radius / stage height** | **0.458** | **0.448** |
+| arc covered by the text | 145.6° | 111.9° |
+
+Hence `r = 45`. Type is `56px` against that 895px stage, which is the
+`6.26` units in `.page-style`. Eyeballing the same screenshot had put the
+radius at 0.73 — worth knowing before trusting a visual estimate here, because
+a shallow arc and a deep one look similar once the text is short.
+
+`letter-spacing: 0.34px` is the one *fitted* rather than measured number:
+radius and size alone leave the left string about 20° short of the mock's
+145.6°, and the tracking closes it.
+
+### Gotchas
+
+- **`overflow: visible` on the SVG is load-bearing.** A long string runs past
+  the viewBox before the ends of its path do; clip it and the copy loses its
+  first and last few characters.
+- **Arc coverage varies with copy length.** At a shared font size "Deepening"
+  covers roughly 40° against thematic's ~140°, so the impact panel reads
+  sparser. Uniform type was the deliberate call; per-panel `letter-spacing` is
+  the lever if that changes.
+- **The text is `aria-hidden`.** Each wheel is already preceded by an
+  `is-title` panel carrying the same sentence as a real heading, so exposing
+  the arcs too would read it twice.
+- **The CSS is page-scoped.** A wheel on another page needs section 5 copied
+  or promoted — the same tradeoff as the card-colour block beside it.
+
+---
+
 ## Rebuilding or extending this
 
 - **Card count changes.** Add/remove a `.prog-highlights_item` under the
@@ -179,7 +283,8 @@ Webflow accepted both, contrary to what gotcha #2 below would predict.
 - **New panel.** Duplicate `is-thematic` (or `is-community`/`is-impact`) as a
   combo pattern: `create_style` a new `is-<name>` combo under
   `prog-highlights_panel`, then a second `is-<name>.is-wheel` 3-way combo for
-  the width/pin-distance override.
+  the width/pin-distance override. Copy the arc embed too, and give its two
+  paths ids no other embed uses.
 - **Verify after any bulk build.** Query for Webflow's default placeholder
   strings (`"This is some text inside of a div block."` for Text Blocks,
   `"Heading"` / `"Lorem ipsum"` for others) across the section before calling
