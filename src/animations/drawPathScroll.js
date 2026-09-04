@@ -1,4 +1,5 @@
 import { gsap, ScrollTrigger } from "../lib/gsap.js";
+import { bandContext } from "./horizontalScroller.js";
 
 /**
  * Draw Path on Scroll — based on the Osmo Supply resource, wired into this
@@ -99,8 +100,16 @@ export function initDrawPathScroll() {
         const paths = svgToUse.querySelectorAll("[data-draw-scroll-path]");
         if (!paths.length) return;
 
-        const start = wrap.getAttribute("data-draw-scroll-start") || "clamp(top center)";
-        const end = wrap.getAttribute("data-draw-scroll-end") || "clamp(bottom center)";
+        // Inside a horizontal band the wrapper never moves vertically, so the
+        // defaults have to swap axis with it. An authored start/end still wins,
+        // and has to be written in the band's axis when there is one.
+        const band = bandContext(wrap);
+        const start =
+          wrap.getAttribute("data-draw-scroll-start") ||
+          (band ? "clamp(left center)" : "clamp(top center)");
+        const end =
+          wrap.getAttribute("data-draw-scroll-end") ||
+          (band ? "clamp(right center)" : "clamp(bottom center)");
         const configuredStagger = Number.parseFloat(
           wrap.getAttribute("data-draw-scroll-stagger"),
         );
@@ -121,10 +130,11 @@ export function initDrawPathScroll() {
             // the artwork, which makes the draw feel delayed or instantaneous.
             // The wrapper still owns the start/end/stagger configuration.
             trigger: svgToUse,
-            start, // when the active SVG's top reaches the viewport point
-            end, // when the active SVG's bottom reaches the viewport point
+            start, // when the active SVG's leading edge reaches the viewport point
+            end, // when its trailing edge reaches the viewport point
             scrub: true,
             invalidateOnRefresh: true,
+            ...band,
           },
         });
 

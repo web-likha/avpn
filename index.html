@@ -199,6 +199,111 @@
         [data-highlight-drum-item] { transform: none !important; }
         [data-highlight-drum-title] { transition-duration: 0.01ms; }
       }
+
+      /* --- Horizontal band + rotary wheel -------------------------------
+         These rules are structural, not decorative: they are the CSS half of
+         the contract in horizontalScroller.js / rotaryWheel.js and have to
+         exist in Webflow too (page-style embed, not Global Styles). */
+      [data-hscroll-viewport] {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow: hidden;
+      }
+      [data-hscroll-track] {
+        display: flex;
+        flex-wrap: nowrap;
+        width: max-content;
+        height: 100%;
+      }
+      [data-rotary-wheel-stage] { position: relative; overflow: hidden; }
+      [data-rotary-wheel-hub] {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 0;
+        height: 0;
+      }
+      [data-rotary-wheel-item] { position: absolute; left: 0; top: 0; }
+      /* Centres the card on the hub point without per-card margin maths. GSAP
+         writes its transforms on the item, so the child's own translate is
+         safe from being clobbered. */
+      [data-rotary-wheel-item] > * { transform: translate(-50%, -50%); }
+
+      /* Preview-only dressing below this line. */
+      /* Full-bleed so the panels' 100vw widths line up with the viewport,
+         which the preview page's body padding would otherwise offset. */
+      .hband { margin: 0 -2rem 2rem; }
+      .hband__panel {
+        flex: none;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        border-right: 1px dashed #444;
+        width: 100vw;
+      }
+      .hband__panel--wide { width: 160vw; }
+      /* Not a centring flex container, unlike the plain panels: the stage has
+         to sit at the panel's leading edge so the pin-spacer's padding can
+         supply the rest of the width. */
+      /* Tunables belong on the panel — the component reads them from
+         [data-rotary-wheel-init], and custom properties don't inherit upward
+         from the stage. Values read off the Programmes Highlights design: 8.8
+         degrees between cards on a rim 5x the stage height, each step 85% the
+         size of the last. */
+      .hband__wheel {
+        width: 340vw;
+        display: block;
+        --rotary-wheel-step: 14;
+        --rotary-wheel-scale: 0.85;
+      }
+      .hband__stage {
+        width: 100vw;
+        height: 100%;
+        background: #a9dcec;
+        color: #0b3b4d;
+      }
+      /* The rim disc is static decoration, so it is plain CSS, not a component:
+         a 932px circle anchored off the right edge behind the cards. */
+      .hband__disc {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 932px;
+        height: 932px;
+        margin: -466px 0 0 -50px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.45);
+      }
+      .hband__copy {
+        position: absolute;
+        left: 6vw;
+        top: 50%;
+        transform: translateY(-50%);
+        max-width: 34vw;
+      }
+      .hband__copy h3 { font-size: 2.6rem; line-height: 1.05; margin: 0 0 1rem; }
+      .hband__copy p { margin: 0 0 1.5rem; opacity: 0.75; }
+      .hband__copy svg { width: 26vw; height: auto; overflow: visible; }
+      /* 426x526 in the design. */
+      .hband__card {
+        width: 426px;
+        height: 526px;
+        border-radius: 1.5rem;
+        background: #0b3b4d;
+        color: #eee;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+        font-size: 2rem;
+        opacity: 0.5;
+        transition: opacity 0.3s ease;
+      }
+      [data-rotary-wheel-state="active"] .hband__card { opacity: 1; }
     </style>
   </head>
   <body data-smooth-scroll-init>
@@ -461,6 +566,47 @@
         </div>
       </div>
     </section>
+
+
+    <p>Horizontal band — a section-scoped horizontal scroller. The outer element
+      is given a height equal to the track's overflow; the sticky viewport's
+      scrollLeft is driven from the page position, so Locomotive still owns the
+      smoothing. Panel 3 pins inside the band and turns a rotary wheel before
+      horizontal motion resumes.</p>
+
+    <div class="hband" data-hscroll-init>
+      <div data-hscroll-viewport>
+        <div data-hscroll-track>
+          <div class="hband__panel">01</div>
+          <div class="hband__panel hband__panel--wide">02 — wide panel</div>
+
+          <div class="hband__panel hband__wheel" data-rotary-wheel-init>
+            <div class="hband__stage" data-rotary-wheel-stage>
+              <div class="hband__copy">
+                <h3>Strengthening engagements in thematic areas</h3>
+                <p>Our product portfolio covers four thematic areas:</p>
+                <div data-draw-scroll-wrap>
+                  <svg data-draw-scroll-desktop viewBox="0 0 400 200" aria-hidden="true"
+                       fill="none" stroke="#0b3b4d" stroke-width="3"
+                       stroke-dasharray="1 10" stroke-linecap="round">
+                    <path data-draw-scroll-path d="M4 196 C 140 196, 200 120, 260 40 S 360 4, 396 4" />
+                  </svg>
+                </div>
+              </div>
+              <div class="hband__disc" aria-hidden="true"></div>
+              <div data-rotary-wheel-hub>
+                <div data-rotary-wheel-item><div class="hband__card">Climate Action</div></div>
+                <div data-rotary-wheel-item><div class="hband__card">Health Impact</div></div>
+                <div data-rotary-wheel-item><div class="hband__card">Gender Equality</div></div>
+                <div data-rotary-wheel-item><div class="hband__card">Economic Inclusion</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hband__panel">04</div>
+        </div>
+      </div>
+    </div>
 
     <script type="module" src="/src/index.js"></script>
   </body>
