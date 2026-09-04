@@ -1,4 +1,5 @@
 import { gsap, SplitText } from "../lib/gsap.js";
+import { bandContext } from "./horizontalScroller.js";
 
 // Per split-type timing. Finer splits get shorter, tighter staggers so a long
 // string doesn't take forever to finish arriving.
@@ -64,7 +65,13 @@ export function initSplitReveal() {
     const type = heading.getAttribute("data-split-reveal") || "lines";
     const typesToSplit = TYPES_TO_SPLIT[type] || TYPES_TO_SPLIT.lines;
     const config = SPLIT_CONFIG[type] || SPLIT_CONFIG.lines;
-    const start = heading.getAttribute("data-split-start") || "clamp(top 80%)";
+    // Inside a horizontal band the heading never moves vertically, so the
+    // default has to swap axis with it. An authored start still wins, and has
+    // to be written in the band's axis when there is one.
+    const band = bandContext(heading);
+    const start =
+      heading.getAttribute("data-split-start") ||
+      (band ? "clamp(left 80%)" : "clamp(top 80%)");
     const once = heading.getAttribute("data-split-once") !== "false";
     const animateOpacity = heading.getAttribute("data-split-opacity") === "true";
     const trigger = resolveTrigger(heading);
@@ -85,9 +92,10 @@ export function initSplitReveal() {
             ease: "none",
             scrollTrigger: {
               trigger,
-              start: "top 20%",
-              end: "bottom 20%",
+              start: band ? "left 20%" : "top 20%",
+              end: band ? "right 20%" : "bottom 20%",
               scrub: true,
+              ...band,
             },
           });
         }
@@ -101,6 +109,7 @@ export function initSplitReveal() {
             trigger,
             start,
             once,
+            ...band,
           },
         });
       },

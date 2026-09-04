@@ -41,6 +41,14 @@ dist/          bundled output pasted into Webflow custom code
   proportions, alignment, sharpness, Webflow setup, tunables, troubleshooting.
 - [`docs/locomotive.md`](docs/locomotive.md) — page-wide smooth scroll and
   `data-scroll-speed` parallax: Webflow setup, tuning, troubleshooting.
+- [`docs/horizontal-scroller.md`](docs/horizontal-scroller.md) — a horizontal
+  scroll band inside a vertical page, and the rotary card wheel that pins
+  inside it: architecture, Webflow setup, required CSS, tunables.
+- [`docs/webflow-programmes-highlights-build.md`](docs/webflow-programmes-highlights-build.md)
+  — how the Programmes Highlights section was actually built in the Webflow
+  Designer: element tree, Client-First class names, variable/color mapping,
+  and MCP-tool gotchas (combo-class ordering, custom properties, text
+  verification).
 
 ## Draw Path on Scroll
 
