@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 
 const ROOT = '[data-testid="wipe-reveal"]';
 const WIPE = `${ROOT} [data-wipe-reveal]`;
+const BAND = '.hband[data-hscroll-init]';
+const BAND_WIPE = `${BAND} [data-wipe-reveal]`;
 const START_CLIP = "inset(100% 0% 0% 0%)";
 const END_CLIP = "inset(0% 0% 0% 0%)";
 
@@ -90,6 +92,38 @@ test("uses data-wipe-trigger position instead of the image position", async ({ p
   expect(result.start + 40).toBeLessThan(result.imageStart);
 
   await page.evaluate((y) => window.scrollTo({ top: y + 80, behavior: "instant" }), result.start);
+  await expect
+    .poll(() => image.evaluate((element) => element.style.clipPath).then(normalizeClipPath))
+    .toBe(await serializedClipPath(page, END_CLIP));
+});
+
+test("wipes from the bottom while an active band scrolls horizontally", async ({ page }) => {
+  await loadFixture(page);
+  await expect(page.locator(`${BAND}[data-hscroll-active]`)).toHaveCount(1);
+
+  const image = page.locator(BAND_WIPE);
+  const result = await image.evaluate((element) => {
+    const trigger = element._wipeTween.scrollTrigger;
+    const viewport = element.closest("[data-hscroll-init]").querySelector("[data-hscroll-viewport]");
+    return {
+      horizontal: trigger.vars.horizontal === true,
+      scroller: trigger.scroller === viewport,
+      start: trigger.start,
+      bandTop: element.closest("[data-hscroll-init]").getBoundingClientRect().top + window.scrollY,
+    };
+  });
+
+  expect(result.horizontal).toBe(true);
+  expect(result.scroller).toBe(true);
+  expect(await image.evaluate((element) => element._wipeTween.scrollTrigger.vars.start)).toBe("clamp(left 80%)");
+  await expect
+    .poll(() => image.evaluate((element) => element.style.clipPath).then(normalizeClipPath))
+    .toBe(await serializedClipPath(page, START_CLIP));
+
+  await page.evaluate(
+    ({ bandTop, start }) => window.scrollTo({ top: bandTop + start + 80, behavior: "instant" }),
+    result,
+  );
   await expect
     .poll(() => image.evaluate((element) => element.style.clipPath).then(normalizeClipPath))
     .toBe(await serializedClipPath(page, END_CLIP));

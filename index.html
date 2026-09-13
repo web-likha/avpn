@@ -518,6 +518,7 @@
         width: 100vw;
       }
       .hband__panel--wide { width: 160vw; }
+      .hband__wipe-image { width: 28vw; max-width: 24rem; height: auto; }
       /* Not a centring flex container, unlike the plain panels: the stage has
          to sit at the panel's leading edge so the pin-spacer's padding can
          supply the rest of the width. */
@@ -1291,7 +1292,15 @@
       <div data-hscroll-viewport>
         <div data-hscroll-track>
           <div class="hband__panel">01</div>
-          <div class="hband__panel hband__panel--wide">02 — wide panel</div>
+          <div class="hband__panel hband__panel--wide">
+            02 — wide panel
+            <img
+              data-wipe-reveal="true"
+              class="hband__wipe-image"
+              alt="Orange and teal horizontal wipe reveal preview"
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='450'%3E%3Crect width='720' height='450' fill='%23f27c38'/%3E%3Ccircle cx='210' cy='230' r='180' fill='%23002944'/%3E%3Ccircle cx='560' cy='160' r='230' fill='%23007b69'/%3E%3C/svg%3E"
+            />
+          </div>
 
           <div class="hband__panel hband__wheel" data-rotary-wheel-init>
             <div class="hband__stage" data-rotary-wheel-stage>
