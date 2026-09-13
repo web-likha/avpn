@@ -6,6 +6,7 @@ import { initMarqueeScrollDirection } from "./animations/marqueeScrollDirection.
 import { initContentReveal } from "./animations/contentReveal.js";
 import { initForewordFade } from "./animations/forewordAnim.js";
 import { initClipReveal } from "./animations/clipReveal.js";
+import { initWipeReveal } from "./animations/wipeReveal.js";
 import { initHighlightDrum } from "./animations/highlightDrum.js";
 import { initHorizontalParallax } from "./animations/horizontalParallax.js";
 import { initShapeSwap } from "./animations/shapeSwap.js";
@@ -43,6 +44,7 @@ function init() {
   initContentReveal();
   initForewordFade();
   initClipReveal();
+  initWipeReveal();
   initHighlightDrum();
   initStoriesStack();
   initArcScrollTransition();
