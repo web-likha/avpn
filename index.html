@@ -248,6 +248,24 @@
         padding: 0;
         background: transparent;
       }
+      .wipe-demo {
+        display: grid;
+        gap: 2rem;
+        margin: 0 0 35vh;
+        padding: 3rem;
+        background: #d9eef0;
+        color: #002944;
+      }
+      .wipe-demo p { max-width: 38rem; margin: 0; font-size: 1.25rem; line-height: 1.5; }
+      .wipe-demo img {
+        display: block;
+        width: min(36rem, 100%);
+        aspect-ratio: 16 / 10;
+        object-fit: cover;
+        background: #f27c38;
+      }
+      .wipe-demo__trigger { padding: 8rem 0 2rem; }
+      .wipe-demo__trigger p { margin: 0; }
       .section_image-breaker {
         position: relative;
         display: block;
@@ -1036,6 +1054,37 @@
         <div>After nested</div>
       </div>
     </div>
+
+    <p>Wipe reveal — images marked <code>[data-wipe-reveal]</code> open from
+      the bottom edge when their trigger reaches 80% of the viewport. The last
+      image uses <code>[data-wipe-trigger]</code> to measure a sibling wrapper.</p>
+
+    <section class="wipe-demo" data-testid="wipe-reveal">
+      <p>Each image has its own scroll position, so the copy and images can
+        alternate naturally in document order.</p>
+      <img
+        data-wipe-reveal="true"
+        alt="Orange and teal wipe reveal preview"
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='450'%3E%3Crect width='720' height='450' fill='%23f27c38'/%3E%3Ccircle cx='210' cy='230' r='180' fill='%23002944'/%3E%3Ccircle cx='560' cy='160' r='230' fill='%23007b69'/%3E%3C/svg%3E"
+      />
+      <div class="wipe-demo__trigger">
+        <p>This wrapper is the trigger for the next image, demonstrating a
+          sticky or otherwise transformed image can use a reliable reference.</p>
+      </div>
+      <img
+        data-wipe-reveal="true"
+        data-wipe-trigger=".wipe-demo__trigger"
+        alt="Blue and coral wipe reveal preview"
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='450'%3E%3Crect width='720' height='450' fill='%23002944'/%3E%3Crect x='120' y='90' width='300' height='280' rx='140' fill='%23f27c38'/%3E%3Ccircle cx='560' cy='230' r='140' fill='%23a9e4f7'/%3E%3C/svg%3E"
+      />
+      <p>The resting CSS state remains visible if the animation bundle is
+        unavailable, and reduced-motion users see the images immediately.</p>
+      <img
+        data-wipe-reveal="true"
+        alt="Green and cream wipe reveal preview"
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='450'%3E%3Crect width='720' height='450' fill='%23007b69'/%3E%3Cpath d='M0 360 Q180 80 360 260 T720 100 V450 H0Z' fill='%23f7f1ea'/%3E%3C/svg%3E"
+      />
+    </section>
 
     <p>Image breaker — a full-width frame stays sticky while
       <code>[data-clip-reveal-*]</code> animates its clipped opening from the
